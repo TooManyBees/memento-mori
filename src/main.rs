@@ -2,7 +2,7 @@ mod rules;
 mod world;
 
 use crate::rules::life;
-use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Cell, World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
 const CELL_SIZE: u32 = 16;
@@ -18,9 +18,10 @@ fn main() {
 
 struct Model {
     world: World,
-    brush_size: f32,
+    brush_size: u8,
     brush_pos: Vec2,
     draw_brush: bool,
+    drawing: bool,
 }
 
 fn model(app: &App) -> Model {
@@ -34,9 +35,10 @@ fn model(app: &App) -> Model {
 
     Model {
         world: World::new(),
-        brush_size: 8.0,
+        brush_size: 8,
         brush_pos: Vec2::ZERO,
         draw_brush: false,
+        drawing: false,
     }
 }
 
@@ -51,8 +53,12 @@ fn event(app: &App, model: &mut Model, event: Event) {
             WindowEvent::MouseEntered => model.draw_brush = true,
             WindowEvent::MouseExited => model.draw_brush = false,
             WindowEvent::MouseMoved(pos) => model.brush_pos = pos,
-            WindowEvent::MousePressed(button) => println!("Mouse pressed: {:?}", button),
-            WindowEvent::MouseReleased(button) => println!("Mouse released: {:?}", button),
+            WindowEvent::MousePressed(MouseButton::Left) => model.drawing = true,
+            WindowEvent::MouseReleased(MouseButton::Left) => model.drawing = false,
+            WindowEvent::MousePressed(MouseButton::Right) => println!("Mouse pressed: Right"),
+            WindowEvent::MouseReleased(MouseButton::Right) => println!("Mouse released: Right"),
+            WindowEvent::MousePressed(MouseButton::Middle) => println!("Mouse pressed: Middle"),
+            WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
             WindowEvent::KeyPressed(key) => println!("Key pressed: {:?}", key),
             WindowEvent::KeyReleased(key) => println!("Key released: {:?}", key),
             WindowEvent::MouseWheel(delta, _) => println!("Scroll {:?}", delta),
@@ -65,6 +71,20 @@ fn event(app: &App, model: &mut Model, event: Event) {
 fn update(_app: &App, model: &mut Model, _update: Update) {
     let (board, next_board) = model.world.this_board_and_next();
     life(board, next_board);
+
+    if model.drawing {
+        const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
+        const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
+        let row = ((model.brush_pos.y - WINDOW_HEIGHT * 0.5) * -1.0 / CELL_SIZE as f32)
+            .floor()
+            .max(0.0) as usize;
+        let col = ((model.brush_pos.x + WINDOW_WIDTH * 0.5) / CELL_SIZE as f32)
+            .floor()
+            .max(0.0) as usize;
+        let center_cell_idx = row * BOARD_WIDTH + col;
+        next_board[center_cell_idx] = Cell::new(true);
+    }
+
     model.world.swap();
 }
 
@@ -103,7 +123,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
             (BOARD_HEIGHT * CELL_SIZE as usize) as f32 * -0.5,
         );
         draw.ellipse()
-            .radius(model.brush_size * CELL_SIZE as f32)
+            .radius(model.brush_size as f32 * CELL_SIZE as f32)
             .xy(model.brush_pos)
             .stroke_weight(2.0)
             .stroke(RED)
