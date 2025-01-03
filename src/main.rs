@@ -18,7 +18,7 @@ fn main() {
 
 struct Model {
     world: World,
-    brush_size: u8,
+    brush_size: f32,
     brush_pos: Vec2,
     draw_brush: bool,
     drawing: bool,
@@ -35,7 +35,7 @@ fn model(app: &App) -> Model {
 
     Model {
         world: World::new(),
-        brush_size: 8,
+        brush_size: 8.0,
         brush_pos: Vec2::ZERO,
         draw_brush: false,
         drawing: false,
@@ -61,7 +61,9 @@ fn event(app: &App, model: &mut Model, event: Event) {
             WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
             WindowEvent::KeyPressed(key) => println!("Key pressed: {:?}", key),
             WindowEvent::KeyReleased(key) => println!("Key released: {:?}", key),
-            WindowEvent::MouseWheel(delta, _) => println!("Scroll {:?}", delta),
+            WindowEvent::MouseWheel(MouseScrollDelta::LineDelta(_, delta), _) => {
+                model.brush_size = (model.brush_size + delta).max(1.0).min(16.0)
+            }
             _ => {}
         },
         _ => {}
@@ -123,7 +125,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
             (BOARD_HEIGHT * CELL_SIZE as usize) as f32 * -0.5,
         );
         draw.ellipse()
-            .radius(model.brush_size as f32 * CELL_SIZE as f32)
+            .radius(model.brush_size * CELL_SIZE as f32)
             .xy(model.brush_pos)
             .stroke_weight(2.0)
             .stroke(RED)
