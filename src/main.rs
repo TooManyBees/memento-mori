@@ -90,8 +90,8 @@ fn view(app: &App, model: &Model, frame: Frame) {
                 .width(CELL_SIZE as f32)
                 .height(CELL_SIZE as f32)
                 .x_y(
-                    (row * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
                     (col * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
+                    (row * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
                 )
                 .color(WHITE);
         }
