@@ -75,16 +75,40 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
     life(board, next_board);
 
     if model.drawing {
+        // TODO: restrict painting to cells of the same ruleset as center index
+
         const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
         const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
-        let row = ((model.brush_pos.y - WINDOW_HEIGHT * 0.5) * -1.0 / CELL_SIZE as f32)
-            .floor()
-            .max(0.0) as usize;
-        let col = ((model.brush_pos.x + WINDOW_WIDTH * 0.5) / CELL_SIZE as f32)
-            .floor()
-            .max(0.0) as usize;
-        let center_cell_idx = row * BOARD_WIDTH + col;
-        next_board[center_cell_idx] = Cell::new(true);
+        let brush_px_y = (model.brush_pos.y - WINDOW_HEIGHT * 0.5) * -1.0;
+        let brush_px_x = model.brush_pos.x + WINDOW_WIDTH * 0.5;
+        let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
+        let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
+
+        let min_row = if brush_row > model.brush_size as usize {
+            brush_row - model.brush_size as usize
+        } else {
+            0
+        };
+        let max_row = (brush_row + model.brush_size as usize).min(BOARD_HEIGHT - 1);
+
+        let min_col = if brush_col > model.brush_size as usize {
+            brush_col - model.brush_size as usize
+        } else {
+            0
+        };
+        let max_col = (brush_col + model.brush_size as usize).min(BOARD_WIDTH - 1);
+
+        for check_row in min_row..=max_row {
+            let check_px_y = (check_row as f32 + 0.5) * CELL_SIZE as f32;
+            for check_col in min_col..=max_col {
+                let check_px_x = (check_col as f32 + 0.5) * CELL_SIZE as f32;
+                let inside = (check_px_x - brush_px_x).pow(2) + (check_px_y - brush_px_y).pow(2)
+                    < (model.brush_size * CELL_SIZE as f32).pow(2);
+                if inside {
+                    next_board[check_row * BOARD_WIDTH + check_col] = Cell::new(true);
+                }
+            }
+        }
     }
 
     model.world.swap();
