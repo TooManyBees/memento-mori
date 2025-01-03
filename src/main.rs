@@ -1,8 +1,8 @@
 mod rules;
 mod world;
 
-use crate::rules::life;
-use crate::world::{Cell, World, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::rules::{life, Life};
+use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
 const CELL_SIZE: u32 = 16;
@@ -105,7 +105,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
                 let inside = (check_px_x - brush_px_x).pow(2) + (check_px_y - brush_px_y).pow(2)
                     < (model.brush_size * CELL_SIZE as f32).pow(2);
                 if inside {
-                    next_board[check_row * BOARD_WIDTH + check_col] = Cell::new(true);
+                    next_board[check_row * BOARD_WIDTH + check_col] = Life::alive();
                 }
             }
         }
@@ -131,7 +131,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
         let row = i / BOARD_WIDTH;
         let col = i % BOARD_WIDTH;
 
-        if cell.state() == true {
+        if let Some(color) = Life::color(*cell) {
             draw.rect()
                 .width(CELL_SIZE as f32)
                 .height(CELL_SIZE as f32)
@@ -139,7 +139,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
                     (col * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
                     (row * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
                 )
-                .color(WHITE);
+                .color(color);
         }
     }
 

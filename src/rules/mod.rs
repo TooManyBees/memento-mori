@@ -1,3 +1,3 @@
 mod life;
 
-pub use life::life;
+pub use life::{life, Life};

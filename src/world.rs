@@ -1,32 +1,10 @@
-use nannou::rand;
+use crate::rules::Life;
 
 pub const BOARD_WIDTH: usize = 40;
 pub const BOARD_HEIGHT: usize = 40;
 
-#[derive(Copy, Clone, Default)]
-pub struct Cell {
-    state: bool,
-}
-
-impl Cell {
-    pub fn new(state: bool) -> Self {
-        Cell { state }
-    }
-
-    pub fn state(&self) -> bool {
-        self.state
-    }
-}
-
-impl std::fmt::Debug for Cell {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self.state {
-            true => 1u8,
-            false => 0u8,
-        }
-        .fmt(fmt)
-    }
-}
+#[derive(Copy, Clone, Default, Debug)]
+pub struct Cell(pub u8);
 
 pub type Board = [Cell; BOARD_WIDTH * BOARD_HEIGHT];
 
@@ -39,10 +17,10 @@ pub struct World {
 
 impl World {
     pub fn new() -> Self {
-        let mut state_a = [Cell::new(false); BOARD_WIDTH * BOARD_HEIGHT];
+        let mut state_a = [Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
         let state_b = state_a.clone();
         for cell in &mut state_a {
-            cell.state = rand::random::<bool>();
+            *cell = Life::random();
         }
 
         World {
