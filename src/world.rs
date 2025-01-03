@@ -31,13 +31,13 @@ impl std::fmt::Debug for Cell {
 pub type Board = [Cell; BOARD_WIDTH * BOARD_HEIGHT];
 
 #[derive(Clone, Debug)]
-pub struct Model {
+pub struct World {
     state_a: Board,
     state_b: Board,
     current_board: CurrentBoard,
 }
 
-impl Model {
+impl World {
     pub fn new() -> Self {
         let mut state_a = [Cell::new(false); BOARD_WIDTH * BOARD_HEIGHT];
         let state_b = state_a.clone();
@@ -45,7 +45,7 @@ impl Model {
             cell.state = rand::random::<bool>();
         }
 
-        Model {
+        World {
             state_a,
             state_b,
             current_board: CurrentBoard::A,

@@ -1,4 +1,4 @@
-use crate::model::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
 
 pub fn life(board: &Board, next_board: &mut Board) {
     for row in 0..BOARD_HEIGHT {

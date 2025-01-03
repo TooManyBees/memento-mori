@@ -1,8 +1,8 @@
-mod model;
 mod rules;
+mod world;
 
-use crate::model::{Model, BOARD_HEIGHT, BOARD_WIDTH};
 use crate::rules::life;
+use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
 const CELL_SIZE: u32 = 16;
@@ -16,6 +16,10 @@ fn main() {
         .run();
 }
 
+struct Model {
+    world: World,
+}
+
 fn model(app: &App) -> Model {
     app.new_window()
         .size(
@@ -25,7 +29,9 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
 
-    Model::new()
+    Model {
+        world: World::new(),
+    }
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) {
@@ -33,9 +39,9 @@ fn event(_app: &App, _model: &mut Model, _event: Event) {
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-    let (board, next_board) = model.this_board_and_next();
+    let (board, next_board) = model.world.this_board_and_next();
     life(board, next_board);
-    model.swap();
+    model.world.swap();
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
@@ -50,7 +56,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
         )
         .scale_y(-1.0);
 
-    let board = model.board();
+    let board = model.world.board();
     for (i, cell) in board.iter().enumerate() {
         let row = i / BOARD_WIDTH;
         let col = i % BOARD_WIDTH;
