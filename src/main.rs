@@ -1,60 +1,9 @@
+mod model;
+
+use model::{Board, Cell, Model, BOARD_WIDTH, BOARD_HEIGHT};
 use nannou::prelude::*;
-use nannou::rand;
 
-#[derive(Copy, Clone, Default)]
-struct Cell {
-    state: bool,
-}
-impl std::fmt::Debug for Cell {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self.state {
-            true => 1u8,
-            false => 0u8,
-        }.fmt(fmt)
-    }
-}
-
-const BOARD_WIDTH: usize = 40;
-const BOARD_HEIGHT: usize = 40;
 const CELL_SIZE: u32 = 16;
-
-type Board = [Cell; BOARD_WIDTH * BOARD_HEIGHT];
-
-#[derive(Copy, Clone, Debug)]
-enum CurrentBoard {
-    A,
-    B,
-}
-
-#[derive(Clone, Debug)]
-struct Model {
-    state_a: Board,
-    state_b: Board,
-    current_board: CurrentBoard,
-}
-
-impl Model {
-    fn board(&self) -> &Board {
-        match self.current_board {
-            CurrentBoard::A => &self.state_a,
-            CurrentBoard::B => &self.state_b,
-        }
-    }
-
-    fn this_board_and_next(&mut self) -> (&Board, &mut Board) {
-        match self.current_board {
-            CurrentBoard::A => (&self.state_a, &mut self.state_b),
-            CurrentBoard::B => (&self.state_b, &mut self.state_a),
-        }
-    }
-
-    fn swap(&mut self) {
-        self.current_board = match self.current_board {
-            CurrentBoard::A => CurrentBoard::B,
-            CurrentBoard::B => CurrentBoard::A,
-        };
-    }
-}
 
 fn main() {
     nannou::app(model)
@@ -72,17 +21,7 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
 
-    let mut state_a = [Cell { state: false }; BOARD_WIDTH * BOARD_HEIGHT];
-    let state_b = state_a.clone();
-    for cell in &mut state_a {
-        cell.state = rand::random::<bool>();
-    }
-
-    Model {
-        state_a,
-        state_b,
-        current_board: CurrentBoard::A,
-    }
+    Model::new()
 }
 
 fn event(_app: &App, _model: &mut Model, _event: Event) {
@@ -108,7 +47,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
         let row = i / BOARD_WIDTH;
         let col = i % BOARD_WIDTH;
 
-        if cell.state == true {
+        if cell.state() == true {
             draw.rect()
                 .width(CELL_SIZE as f32)
                 .height(CELL_SIZE as f32)
@@ -124,7 +63,7 @@ fn game_of_life(board: &Board, next_board: &mut Board) {
     for row in 0..BOARD_HEIGHT {
         for col in 0..BOARD_WIDTH {
             let next_cell_state = game_of_life_next_cell_state(board, row, col);
-            next_board[row * BOARD_WIDTH + col] = Cell { state: next_cell_state };
+            next_board[row * BOARD_WIDTH + col] = Cell::new(next_cell_state);
         }
     }
 }
@@ -160,13 +99,13 @@ fn game_of_life_next_cell_state(board: &Board, row: usize, col: usize) -> bool {
                 Delta::GT => col + 1,
             };
 
-            if board[neighbor_idx].state == true {
+            if board[neighbor_idx].state() == true {
                 live_neighbors += 1;
             }
         }
     }
 
-    match (board[idx].state, live_neighbors) {
+    match (board[idx].state(), live_neighbors) {
         (true, x) if x < 2 => false,
         (true, 2) | (true, 3) => true,
         (true, x) if x > 3 => false,
