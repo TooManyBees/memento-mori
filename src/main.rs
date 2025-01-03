@@ -40,15 +40,21 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn event(_app: &App, model: &mut Model, event: Event) {
+fn event(app: &App, model: &mut Model, event: Event) {
     match event {
         Event::WindowEvent {
             simple: Some(window_event),
             ..
         } => match window_event {
+            WindowEvent::Focused => app.set_loop_mode(LoopMode::RefreshSync),
+            WindowEvent::Unfocused => app.set_loop_mode(LoopMode::loop_ntimes(0)),
             WindowEvent::MouseEntered => model.draw_brush = true,
             WindowEvent::MouseExited => model.draw_brush = false,
             WindowEvent::MouseMoved(pos) => model.brush_pos = pos,
+            WindowEvent::MousePressed(button) => println!("Mouse pressed: {:?}", button),
+            WindowEvent::MouseReleased(button) => println!("Mouse released: {:?}", button),
+            WindowEvent::KeyPressed(key) => println!("Key pressed: {:?}", key),
+            WindowEvent::KeyReleased(key) => println!("Key released: {:?}", key),
             _ => {}
         },
         _ => {}
