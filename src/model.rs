@@ -10,9 +10,7 @@ pub struct Cell {
 
 impl Cell {
     pub fn new(state: bool) -> Self {
-        Cell {
-            state,
-        }
+        Cell { state }
     }
 
     pub fn state(&self) -> bool {
@@ -25,7 +23,8 @@ impl std::fmt::Debug for Cell {
         match self.state {
             true => 1u8,
             false => 0u8,
-        }.fmt(fmt)
+        }
+        .fmt(fmt)
     }
 }
 

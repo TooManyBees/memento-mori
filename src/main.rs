@@ -1,8 +1,8 @@
 mod model;
 mod rules;
 
-use crate::model::{Model, BOARD_WIDTH, BOARD_HEIGHT};
-use crate::rules::{life};
+use crate::model::{Model, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::rules::life;
 use nannou::prelude::*;
 
 const CELL_SIZE: u32 = 16;
@@ -16,10 +16,12 @@ fn main() {
         .run();
 }
 
-
 fn model(app: &App) -> Model {
     app.new_window()
-        .size(BOARD_WIDTH as u32 * CELL_SIZE, BOARD_HEIGHT as u32 * CELL_SIZE)
+        .size(
+            BOARD_WIDTH as u32 * CELL_SIZE,
+            BOARD_HEIGHT as u32 * CELL_SIZE,
+        )
         .build()
         .unwrap();
 
@@ -40,8 +42,12 @@ fn view(app: &App, model: &Model, frame: Frame) {
     frame.clear(BLACK);
 
     // Turn cartesian coordinates into graphics coordinates
-    let draw = app.draw()
-        .x_y((BOARD_WIDTH * CELL_SIZE as usize) as f32 * -0.5, (BOARD_HEIGHT * CELL_SIZE as usize) as f32 * 0.5)
+    let draw = app
+        .draw()
+        .x_y(
+            (BOARD_WIDTH * CELL_SIZE as usize) as f32 * -0.5,
+            (BOARD_HEIGHT * CELL_SIZE as usize) as f32 * 0.5,
+        )
         .scale_y(-1.0);
 
     let board = model.board();
@@ -53,7 +59,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
             draw.rect()
                 .width(CELL_SIZE as f32)
                 .height(CELL_SIZE as f32)
-                .x_y((row * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32, (col * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32)
+                .x_y(
+                    (row * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
+                    (col * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
+                )
                 .color(WHITE);
         }
     }

@@ -1,4 +1,4 @@
-use crate::model::{Board, Cell, BOARD_WIDTH, BOARD_HEIGHT};
+use crate::model::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
 
 pub fn life(board: &Board, next_board: &mut Board) {
     for row in 0..BOARD_HEIGHT {
@@ -26,7 +26,10 @@ fn next_cell_state(board: &Board, row: usize, col: usize) -> bool {
         }
 
         for dx in [Delta::LT, Delta::EQ, Delta::GT].into_iter() {
-            if (dx == Delta::LT && col == 0) || (dx == Delta::GT && (col + 1) == BOARD_WIDTH) || (dx == Delta::EQ && dy == Delta::EQ) {
+            if (dx == Delta::LT && col == 0)
+                || (dx == Delta::GT && (col + 1) == BOARD_WIDTH)
+                || (dx == Delta::EQ && dy == Delta::EQ)
+            {
                 continue;
             }
 
@@ -34,11 +37,12 @@ fn next_cell_state(board: &Board, row: usize, col: usize) -> bool {
                 Delta::LT => row - 1,
                 Delta::EQ => row,
                 Delta::GT => row + 1,
-            } * BOARD_WIDTH + match dx {
-                Delta::LT => col - 1,
-                Delta::EQ => col,
-                Delta::GT => col + 1,
-            };
+            } * BOARD_WIDTH
+                + match dx {
+                    Delta::LT => col - 1,
+                    Delta::EQ => col,
+                    Delta::GT => col + 1,
+                };
 
             if board[neighbor_idx].state() == true {
                 live_neighbors += 1;
