@@ -18,6 +18,9 @@ fn main() {
 
 struct Model {
     world: World,
+    brush_size: f32,
+    brush_pos: Vec2,
+    draw_brush: bool,
 }
 
 fn model(app: &App) -> Model {
@@ -31,11 +34,25 @@ fn model(app: &App) -> Model {
 
     Model {
         world: World::new(),
+        brush_size: 8.0,
+        brush_pos: Vec2::ZERO,
+        draw_brush: false,
     }
 }
 
-fn event(_app: &App, _model: &mut Model, _event: Event) {
-
+fn event(_app: &App, model: &mut Model, event: Event) {
+    match event {
+        Event::WindowEvent {
+            simple: Some(window_event),
+            ..
+        } => match window_event {
+            WindowEvent::MouseEntered => model.draw_brush = true,
+            WindowEvent::MouseExited => model.draw_brush = false,
+            WindowEvent::MouseMoved(pos) => model.brush_pos = pos,
+            _ => {}
+        },
+        _ => {}
+    }
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
@@ -48,7 +65,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
     frame.clear(BLACK);
 
     // Turn cartesian coordinates into graphics coordinates
-    let draw = app
+    let mut draw = app
         .draw()
         .x_y(
             (BOARD_WIDTH * CELL_SIZE as usize) as f32 * -0.5,
@@ -71,6 +88,19 @@ fn view(app: &App, model: &Model, frame: Frame) {
                 )
                 .color(WHITE);
         }
+    }
+
+    if model.draw_brush {
+        draw = draw.scale_y(-1.0).x_y(
+            (BOARD_WIDTH * CELL_SIZE as usize) as f32 * 0.5,
+            (BOARD_HEIGHT * CELL_SIZE as usize) as f32 * -0.5,
+        );
+        draw.ellipse()
+            .radius(model.brush_size * CELL_SIZE as f32)
+            .xy(model.brush_pos)
+            .stroke_weight(2.0)
+            .stroke(RED)
+            .no_fill();
     }
 
     draw.to_frame(app, &frame).unwrap();
