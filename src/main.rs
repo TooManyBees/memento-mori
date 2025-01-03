@@ -55,6 +55,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
             WindowEvent::MouseReleased(button) => println!("Mouse released: {:?}", button),
             WindowEvent::KeyPressed(key) => println!("Key pressed: {:?}", key),
             WindowEvent::KeyReleased(key) => println!("Key released: {:?}", key),
+            WindowEvent::MouseWheel(delta, _) => println!("Scroll {:?}", delta),
             _ => {}
         },
         _ => {}
