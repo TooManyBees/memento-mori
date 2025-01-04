@@ -62,44 +62,40 @@ pub fn life(board: &Board, next_board: &mut Board) {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-enum Delta {
-    LT,
-    EQ,
-    GT,
+fn count_live_row_neighbors(board: &Board, row: usize, col: usize) -> u8 {
+    let idx = row * BOARD_WIDTH + col;
+
+    let mut live = if Life::state(board[idx]) == State::Alive { 1 } else { 0 };
+
+    if col > 0 {
+        if Life::state(board[idx - 1]) == State::Alive {
+            live += 1;
+        }
+    }
+
+    if (col + 1) < BOARD_WIDTH {
+        if Life::state(board[idx + 1]) == State::Alive {
+            live += 1;
+        }
+    }
+    live
 }
 
 fn count_live_neighbors(board: &Board, row: usize, col: usize) -> u8 {
     let mut live_neighbors = 0;
 
-    for dy in [Delta::LT, Delta::EQ, Delta::GT].into_iter() {
-        if (dy == Delta::LT && row == 0) || (dy == Delta::GT && (row + 1) == BOARD_HEIGHT) {
-            continue;
-        }
+    if row > 0 {
+        live_neighbors += count_live_row_neighbors(board, row - 1, col);
+    }
 
-        for dx in [Delta::LT, Delta::EQ, Delta::GT].into_iter() {
-            if (dx == Delta::LT && col == 0)
-                || (dx == Delta::GT && (col + 1) == BOARD_WIDTH)
-                || (dx == Delta::EQ && dy == Delta::EQ)
-            {
-                continue;
-            }
+    live_neighbors += count_live_row_neighbors(board, row, col);
+    // Exclude the central 'self' if it was counted as alive
+    if Life::state(board[row * BOARD_WIDTH + col]) == State::Alive {
+        live_neighbors -= 1;
+    }
 
-            let neighbor_idx = match dy {
-                Delta::LT => row - 1,
-                Delta::EQ => row,
-                Delta::GT => row + 1,
-            } * BOARD_WIDTH
-                + match dx {
-                    Delta::LT => col - 1,
-                    Delta::EQ => col,
-                    Delta::GT => col + 1,
-                };
-
-            if Life::state(board[neighbor_idx]) == State::Alive {
-                live_neighbors += 1;
-            }
-        }
+    if row + 1 < BOARD_HEIGHT {
+        live_neighbors += count_live_row_neighbors(board, row + 1, col);
     }
 
     live_neighbors
