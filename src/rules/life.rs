@@ -1,3 +1,4 @@
+use crate::rules::Ruleset;
 use crate::world::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::color::{encoding::Srgb, rgb::Rgb};
 use nannou::prelude::WHITE;
@@ -6,19 +7,28 @@ use nannou::rand;
 pub struct Life;
 impl Life {
 	pub fn alive() -> Cell {
-		Cell(State::Alive as u8)
+		Cell {
+			ruleset: Ruleset::Life,
+			state: State::Alive as u8,
+		}
 	}
 
 	fn dead() -> Cell {
-		Cell(State::Dead as u8)
+		Cell {
+			ruleset: Ruleset::Life,
+			state: State::Dead as u8,
+		}
 	}
 
 	pub fn random() -> Cell {
-		Cell(rand::random_range::<u8>(0, 2))
+		Cell {
+			ruleset: Ruleset::Life,
+			state: rand::random_range::<u8>(0, 2),
+		}
 	}
 
 	fn state(cell: Cell) -> State {
-		if cell.0 >= 1 {
+		if cell.state >= 1 {
 			State::Alive
 		} else {
 			State::Dead
@@ -35,6 +45,14 @@ impl Life {
 	#[allow(dead_code)]
 	pub fn debug(cell: Cell) -> Debug {
 		Debug(Life::state(cell) as u8)
+	}
+
+	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
+		next_cell_state(board, row, col)
+	}
+
+	pub fn generate(board: &Board, next_board: &mut Board) {
+		life(board, next_board);
 	}
 }
 
@@ -53,7 +71,7 @@ impl std::fmt::Debug for Debug {
 	}
 }
 
-pub fn life(board: &Board, next_board: &mut Board) {
+fn life(board: &Board, next_board: &mut Board) {
 	for row in 0..BOARD_HEIGHT {
 		for col in 0..BOARD_WIDTH {
 			let next_cell_state = next_cell_state(board, row, col);
@@ -65,7 +83,11 @@ pub fn life(board: &Board, next_board: &mut Board) {
 fn count_live_row_neighbors(board: &Board, row: usize, col: usize) -> u8 {
 	let idx = row * BOARD_WIDTH + col;
 
-	let mut live = if Life::state(board[idx]) == State::Alive { 1 } else { 0 };
+	let mut live = if Life::state(board[idx]) == State::Alive {
+		1
+	} else {
+		0
+	};
 
 	if col > 0 {
 		if Life::state(board[idx - 1]) == State::Alive {

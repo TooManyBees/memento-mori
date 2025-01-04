@@ -1,7 +1,6 @@
 mod rules;
 mod world;
 
-use crate::rules::{brians_brain, life, BriansBrain, Life};
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
@@ -70,10 +69,10 @@ fn event(app: &App, model: &mut Model, event: Event) {
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-	let (board, next_board) = model.world.this_board_and_next();
-	life(board, next_board);
+	model.world.generate();
 
 	if model.drawing {
+		let (board, next_board) = model.world.this_board_and_next();
 		// TODO: restrict painting to cells of the same ruleset as center index
 
 		const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
@@ -82,6 +81,10 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 		let brush_px_x = model.brush_pos.x + WINDOW_WIDTH * 0.5;
 		let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
 		let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
+
+		// FIXME this panics with oob when you click and drag outside the window
+		// which keeps the window focused while the cursor is above a nonexistant cell
+		let brush_ruleset = board[brush_row * BOARD_WIDTH + brush_col].ruleset;
 
 		let min_row = if brush_row > model.brush_size as usize {
 			brush_row - model.brush_size as usize
@@ -104,7 +107,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 				let inside = (check_px_x - brush_px_x).pow(2) + (check_px_y - brush_px_y).pow(2)
 					< (model.brush_size * CELL_SIZE as f32).pow(2);
 				if inside {
-					next_board[check_row * BOARD_WIDTH + check_col] = Life::alive();
+					next_board[check_row * BOARD_WIDTH + check_col] = brush_ruleset.on()
 				}
 			}
 		}
@@ -130,7 +133,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 		let row = i / BOARD_WIDTH;
 		let col = i % BOARD_WIDTH;
 
-		if let Some(color) = Life::color(*cell) {
+		if let Some(color) = cell.ruleset.color(*cell) {
 			draw.rect()
 				.width(CELL_SIZE as f32)
 				.height(CELL_SIZE as f32)

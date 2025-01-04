@@ -1,10 +1,13 @@
-use crate::rules::Life;
+use crate::rules::Ruleset;
 
 pub const BOARD_WIDTH: usize = 40;
 pub const BOARD_HEIGHT: usize = 40;
 
 #[derive(Copy, Clone, Default, Debug)]
-pub struct Cell(pub u8);
+pub struct Cell {
+	pub ruleset: Ruleset,
+	pub state: u8,
+}
 
 pub type Board = [Cell; BOARD_WIDTH * BOARD_HEIGHT];
 
@@ -50,7 +53,19 @@ impl World {
 
 	pub fn randomize(&mut self) {
 		for cell in self.board_mut() {
-			*cell = Life::random();
+			*cell = cell.ruleset.random();
+		}
+	}
+
+	pub fn generate(&mut self) {
+		let (board, next_board) = self.this_board_and_next();
+		for row in 0..BOARD_HEIGHT {
+			for col in 0..BOARD_WIDTH {
+				let idx = row * BOARD_WIDTH + col;
+				let cell = board[idx];
+				let next_cell = cell.ruleset.next_cell_state(board, row, col);
+				next_board[idx] = next_cell;
+			}
 		}
 	}
 
