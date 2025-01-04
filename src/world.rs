@@ -44,6 +44,13 @@ impl World {
 		}
 	}
 
+	pub fn next_board_mut(&mut self) -> &mut Board {
+		match self.current_board {
+			CurrentBoard::A => &mut self.state_b,
+			CurrentBoard::B => &mut self.state_a,
+		}
+	}
+
 	pub fn this_board_and_next(&mut self) -> (&Board, &mut Board) {
 		match self.current_board {
 			CurrentBoard::A => (&self.state_a, &mut self.state_b),
@@ -64,7 +71,7 @@ impl World {
 				let idx = row * BOARD_WIDTH + col;
 				let cell = board[idx];
 				let next_cell = cell.ruleset.next_cell_state(board, row, col);
-				next_board[idx] = next_cell;
+				next_board[idx].state = next_cell.state;
 			}
 		}
 	}

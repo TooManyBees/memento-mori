@@ -1,7 +1,8 @@
 mod rules;
 mod world;
 
-use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::rules::Ruleset;
+use crate::world::{Board, World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
 const CELL_SIZE: u32 = 16;
@@ -15,10 +16,15 @@ fn main() {
 		.run();
 }
 
+struct Brush {
+	size: f32,
+	pos: Vec2,
+	ruleset: Ruleset,
+}
+
 struct Model {
 	world: World,
-	brush_size: f32,
-	brush_pos: Vec2,
+	brush: Brush,
 	draw_brush: bool,
 	drawing: bool,
 }
@@ -34,8 +40,12 @@ fn model(app: &App) -> Model {
 
 	Model {
 		world: World::new(),
-		brush_size: 8.0,
-		brush_pos: Vec2::ZERO,
+		brush: Brush {
+			size: 8.0,
+			pos: Vec2::ZERO,
+			// ruleset: Default::default(),
+			ruleset: crate::rules::Ruleset::BriansBrain,
+		},
 		draw_brush: false,
 		drawing: false,
 	}
@@ -51,7 +61,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::Unfocused => app.set_loop_mode(LoopMode::loop_ntimes(0)),
 			WindowEvent::MouseEntered => model.draw_brush = true,
 			WindowEvent::MouseExited => model.draw_brush = false,
-			WindowEvent::MouseMoved(pos) => model.brush_pos = pos,
+			WindowEvent::MouseMoved(pos) => model.brush.pos = pos,
 			WindowEvent::MousePressed(MouseButton::Left) => model.drawing = true,
 			WindowEvent::MouseReleased(MouseButton::Left) => model.drawing = false,
 			WindowEvent::MousePressed(MouseButton::Right) => println!("Mouse pressed: Right"),
@@ -60,7 +70,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
 			WindowEvent::MouseWheel(MouseScrollDelta::LineDelta(_, delta), _) => {
-				model.brush_size = (model.brush_size + delta).max(1.0).min(16.0)
+				model.brush.size = (model.brush.size + delta).max(1.0).min(16.0)
 			}
 			_ => {}
 		},
@@ -68,48 +78,68 @@ fn event(app: &App, model: &mut Model, event: Event) {
 	}
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
+fn paint(model: &mut Model, f: fn(&mut Board, &Brush, Ruleset, usize)) {
+	const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
+	const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
+	let brush_px_y = (model.brush.pos.y - WINDOW_HEIGHT * 0.5) * -1.0;
+	let brush_px_x = model.brush.pos.x + WINDOW_WIDTH * 0.5;
+	let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
+	let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
+
+	let min_row = if brush_row > model.brush.size as usize {
+		brush_row - model.brush.size as usize
+	} else {
+		0
+	};
+	let max_row = (brush_row + model.brush.size as usize).min(BOARD_HEIGHT - 1);
+
+	let min_col = if brush_col > model.brush.size as usize {
+		brush_col - model.brush.size as usize
+	} else {
+		0
+	};
+	let max_col = (brush_col + model.brush.size as usize).min(BOARD_WIDTH - 1);
+
+	let next_board = model.world.next_board_mut();
+
+	// If you're clicking the app, you are by definition clicking a valid cell,
+	// so the following slice index will be safe. However, if you click and drag,
+	// you are able to can keep the app running while you move the mouse outside
+	// of the valid area, so we must still clamp the mouse's position.
+	let valid_brush_row = brush_row.max(min_row).min(max_row);
+	let valid_brush_col = brush_col.max(min_col).min(max_col);
+	let brush_ruleset = next_board[valid_brush_row * BOARD_WIDTH + valid_brush_col].ruleset;
+
+	for check_row in min_row..=max_row {
+		let check_px_y = (check_row as f32 + 0.5) * CELL_SIZE as f32;
+		for check_col in min_col..=max_col {
+			let check_px_x = (check_col as f32 + 0.5) * CELL_SIZE as f32;
+			let inside = (check_px_x - brush_px_x).pow(2) + (check_px_y - brush_px_y).pow(2)
+				< (model.brush.size * CELL_SIZE as f32).pow(2);
+			if inside {
+				let idx = check_row * BOARD_WIDTH + check_col;
+				f(next_board, &model.brush, brush_ruleset, idx);
+			}
+		}
+	}
+}
+
+fn update(app: &App, model: &mut Model, _update: Update) {
 	model.world.generate();
 
 	if model.drawing {
-		let (board, next_board) = model.world.this_board_and_next();
-		// TODO: restrict painting to cells of the same ruleset as center index
+		fn paint_liveness(board: &mut Board, _brush: &Brush, ruleset: Ruleset, idx: usize) {
+			board[idx] = ruleset.on();
+		}
 
-		const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
-		const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
-		let brush_px_y = (model.brush_pos.y - WINDOW_HEIGHT * 0.5) * -1.0;
-		let brush_px_x = model.brush_pos.x + WINDOW_WIDTH * 0.5;
-		let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
-		let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
+		fn paint_ruleset(board: &mut Board, brush: &Brush, _ruleset: Ruleset, idx: usize) {
+			board[idx].ruleset = brush.ruleset;
+		}
 
-		// FIXME this panics with oob when you click and drag outside the window
-		// which keeps the window focused while the cursor is above a nonexistant cell
-		let brush_ruleset = board[brush_row * BOARD_WIDTH + brush_col].ruleset;
-
-		let min_row = if brush_row > model.brush_size as usize {
-			brush_row - model.brush_size as usize
+		if app.keys.mods.ctrl() {
+			paint(model, paint_ruleset);
 		} else {
-			0
-		};
-		let max_row = (brush_row + model.brush_size as usize).min(BOARD_HEIGHT - 1);
-
-		let min_col = if brush_col > model.brush_size as usize {
-			brush_col - model.brush_size as usize
-		} else {
-			0
-		};
-		let max_col = (brush_col + model.brush_size as usize).min(BOARD_WIDTH - 1);
-
-		for check_row in min_row..=max_row {
-			let check_px_y = (check_row as f32 + 0.5) * CELL_SIZE as f32;
-			for check_col in min_col..=max_col {
-				let check_px_x = (check_col as f32 + 0.5) * CELL_SIZE as f32;
-				let inside = (check_px_x - brush_px_x).pow(2) + (check_px_y - brush_px_y).pow(2)
-					< (model.brush_size * CELL_SIZE as f32).pow(2);
-				if inside {
-					next_board[check_row * BOARD_WIDTH + check_col] = brush_ruleset.on()
-				}
-			}
+			paint(model, paint_liveness);
 		}
 	}
 
@@ -151,8 +181,8 @@ fn view(app: &App, model: &Model, frame: Frame) {
 			(BOARD_HEIGHT * CELL_SIZE as usize) as f32 * -0.5,
 		);
 		draw.ellipse()
-			.radius(model.brush_size * CELL_SIZE as f32)
-			.xy(model.brush_pos)
+			.radius(model.brush.size * CELL_SIZE as f32)
+			.xy(model.brush.pos)
 			.stroke_weight(2.0)
 			.stroke(RED)
 			.no_fill();
