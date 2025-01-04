@@ -1,7 +1,7 @@
 mod rules;
 mod world;
 
-use crate::rules::{life, Life};
+use crate::rules::{brians_brain, life, BriansBrain, Life};
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
