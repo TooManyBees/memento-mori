@@ -1,7 +1,6 @@
 use crate::rules::Ruleset;
 use crate::world::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
-use nannou::color::{encoding::Srgb, rgb::Rgb};
-use nannou::prelude::WHITE;
+use nannou::color::{encoding::Srgb, rgb::Rgb, WHITE};
 use nannou::rand;
 
 pub struct Life;
@@ -50,10 +49,6 @@ impl Life {
 	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
 	}
-
-	pub fn generate(board: &Board, next_board: &mut Board) {
-		life(board, next_board);
-	}
 }
 
 #[derive(PartialEq, Eq)]
@@ -68,15 +63,6 @@ pub struct Debug(u8);
 impl std::fmt::Debug for Debug {
 	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
 		self.0.fmt(fmt)
-	}
-}
-
-fn life(board: &Board, next_board: &mut Board) {
-	for row in 0..BOARD_HEIGHT {
-		for col in 0..BOARD_WIDTH {
-			let next_cell_state = next_cell_state(board, row, col);
-			next_board[row * BOARD_WIDTH + col] = next_cell_state;
-		}
 	}
 }
 

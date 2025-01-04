@@ -1,7 +1,6 @@
 use crate::rules::Ruleset;
 use crate::world::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
-use nannou::color::{encoding::Srgb, rgb::Rgb};
-use nannou::prelude::{BLUE, WHITE};
+use nannou::color::{encoding::Srgb, rgb::Rgb, BLUE, WHITE};
 use nannou::rand;
 
 pub struct BriansBrain;
@@ -60,10 +59,6 @@ impl BriansBrain {
 	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
 	}
-
-	pub fn generate(board: &Board, next_board: &mut Board) {
-		brians_brain(board, next_board);
-	}
 }
 
 #[derive(PartialEq, Eq)]
@@ -94,15 +89,6 @@ fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 			} else {
 				BriansBrain::dead()
 			}
-		}
-	}
-}
-
-fn brians_brain(board: &Board, next_board: &mut Board) {
-	for row in 0..BOARD_HEIGHT {
-		for col in 0..BOARD_WIDTH {
-			let idx = row * BOARD_WIDTH + col;
-			next_board[idx] = next_cell_state(board, row, col);
 		}
 	}
 }
