@@ -17,11 +17,8 @@ pub struct World {
 
 impl World {
     pub fn new() -> Self {
-        let mut state_a = [Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
+        let state_a = [Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
         let state_b = state_a.clone();
-        for cell in &mut state_a {
-            *cell = Life::random();
-        }
 
         World {
             state_a,
@@ -37,10 +34,23 @@ impl World {
         }
     }
 
+    fn board_mut(&mut self) -> &mut Board {
+        match self.current_board {
+            CurrentBoard::A => &mut self.state_a,
+            CurrentBoard::B => &mut self.state_b,
+        }
+    }
+
     pub fn this_board_and_next(&mut self) -> (&Board, &mut Board) {
         match self.current_board {
             CurrentBoard::A => (&self.state_a, &mut self.state_b),
             CurrentBoard::B => (&self.state_b, &mut self.state_a),
+        }
+    }
+
+    pub fn randomize(&mut self) {
+        for cell in self.board_mut() {
+            *cell = Life::random();
         }
     }
 
