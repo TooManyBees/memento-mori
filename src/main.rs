@@ -128,8 +128,8 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	model.world.generate();
 
 	if model.drawing {
-		fn paint_liveness(board: &mut Board, _brush: &Brush, ruleset: Ruleset, idx: usize) {
-			board[idx] = ruleset.on();
+		fn paint_liveness(board: &mut Board, _brush: &Brush, _ruleset: Ruleset, idx: usize) {
+			board[idx] = board[idx].ruleset.on();
 		}
 
 		fn paint_ruleset(board: &mut Board, brush: &Brush, _ruleset: Ruleset, idx: usize) {
