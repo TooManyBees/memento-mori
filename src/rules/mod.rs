@@ -33,7 +33,7 @@ impl Ruleset {
 		}
 	}
 
-	pub fn color(&self, cell: Cell) -> Option<Rgb<Srgb, u8>> {
+	pub fn color(&self, cell: Cell) -> Rgb<Srgb, u8> {
 		match self {
 			Ruleset::Life => Life::color(cell),
 			Ruleset::BriansBrain => BriansBrain::color(cell),

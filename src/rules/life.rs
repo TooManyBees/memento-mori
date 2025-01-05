@@ -1,6 +1,6 @@
 use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
-use nannou::color::{encoding::Srgb, rgb::Rgb, WHITE};
+use nannou::color::{encoding::Srgb, rgb::Rgb, *};
 use nannou::rand;
 
 pub struct Life;
@@ -34,10 +34,10 @@ impl Life {
 		}
 	}
 
-	pub fn color(cell: Cell) -> Option<Rgb<Srgb, u8>> {
+	pub fn color(cell: Cell) -> Rgb<Srgb, u8> {
 		match Life::state(cell) {
-			State::Alive => Some(WHITE),
-			State::Dead => None,
+			State::Alive => WHITE,
+			State::Dead => BLACK,
 		}
 	}
 

@@ -5,7 +5,7 @@ use crate::rules::Ruleset;
 use crate::world::{Cell, World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
-const CELL_SIZE: u32 = 16;
+const CELL_SIZE: usize = 4;
 
 fn main() {
 	nannou::app(model)
@@ -27,16 +27,28 @@ struct Model {
 	brush: Brush,
 	draw_brush: bool,
 	drawing: bool,
+	mesh: Vec<geom::Tri<Vec3>>,
 }
 
 fn model(app: &App) -> Model {
 	app.new_window()
 		.size(
-			BOARD_WIDTH as u32 * CELL_SIZE,
-			BOARD_HEIGHT as u32 * CELL_SIZE,
+			BOARD_WIDTH as u32 * CELL_SIZE as u32,
+			BOARD_HEIGHT as u32 * CELL_SIZE as u32,
 		)
 		.build()
 		.unwrap();
+
+	let mesh = (0..(BOARD_WIDTH * BOARD_HEIGHT)).flat_map(|i| {
+		let row = i / BOARD_WIDTH;
+		let col = i % BOARD_WIDTH;
+		geom::Quad([
+			pt3((col * CELL_SIZE) as f32, (row * CELL_SIZE) as f32, 0.0),
+			pt3(((col + 1) * CELL_SIZE) as f32, (row * CELL_SIZE) as f32, 0.0),
+			pt3(((col + 1) * CELL_SIZE) as f32, ((row + 1) * CELL_SIZE) as f32, 0.0),
+			pt3((col * CELL_SIZE) as f32, ((row + 1) * CELL_SIZE) as f32, 0.0),
+		]).triangles_iter()
+	}).collect();
 
 	Model {
 		world: World::new(),
@@ -48,6 +60,7 @@ fn model(app: &App) -> Model {
 		},
 		draw_brush: false,
 		drawing: false,
+		mesh,
 	}
 }
 
@@ -147,38 +160,27 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
-	frame.clear(BLACK);
-
 	// Turn cartesian coordinates into graphics coordinates
 	let mut draw = app
 		.draw()
 		.x_y(
-			(BOARD_WIDTH * CELL_SIZE as usize) as f32 * -0.5,
-			(BOARD_HEIGHT * CELL_SIZE as usize) as f32 * 0.5,
+			(BOARD_WIDTH * CELL_SIZE) as f32 * -0.5,
+			(BOARD_HEIGHT * CELL_SIZE) as f32 * 0.5,
 		)
 		.scale_y(-1.0);
 
 	let board = model.world.board();
-	for (i, cell) in board.iter().enumerate() {
-		let row = i / BOARD_WIDTH;
-		let col = i % BOARD_WIDTH;
+	let colored_tris = model.mesh.chunks_exact(2).zip(board.iter()).flat_map(|(tris, cell)| {
+		let cell_color = cell.ruleset.color(*cell);
+		tris.into_iter().map(move |tri| tri.map_vertices(|v| (v, cell_color)))
+	});
 
-		if let Some(color) = cell.ruleset.color(*cell) {
-			draw.rect()
-				.width(CELL_SIZE as f32)
-				.height(CELL_SIZE as f32)
-				.x_y(
-					(col * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
-					(row * CELL_SIZE as usize) as f32 + 0.5 * CELL_SIZE as f32,
-				)
-				.color(color);
-		}
-	}
+	draw.mesh().tris_colored(colored_tris);
 
 	if model.draw_brush {
 		draw = draw.scale_y(-1.0).x_y(
-			(BOARD_WIDTH * CELL_SIZE as usize) as f32 * 0.5,
-			(BOARD_HEIGHT * CELL_SIZE as usize) as f32 * -0.5,
+			(BOARD_WIDTH * CELL_SIZE) as f32 * 0.5,
+			(BOARD_HEIGHT * CELL_SIZE) as f32 * -0.5,
 		);
 		draw.ellipse()
 			.radius(model.brush.size * CELL_SIZE as f32)
