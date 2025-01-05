@@ -93,45 +93,40 @@ fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 	}
 }
 
-fn count_firing_row_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
+fn count_firing_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_center: bool) -> u8 {
 	let idx = row * BOARD_WIDTH + col;
 
-	let mut live = if BriansBrain::state(board[idx]) == State::Firing {
-		1
-	} else {
+	let mut live = if exclude_center {
 		0
+	} else {
+		board[idx].state & 0b01
 	};
 
 	if col > 0 {
-		if BriansBrain::state(board[idx - 1]) == State::Firing {
-			live += 1;
-		}
+		live <<= 1;
+		live |= board[idx - 1].state & 0b01;
 	}
 
 	if (col + 1) < BOARD_WIDTH {
-		if BriansBrain::state(board[idx + 1]) == State::Firing {
-			live += 1;
-		}
+		live <<= 1;
+		live |= board[idx + 1].state & 0b01;
 	}
+
 	live
 }
 
-fn count_firing_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
-	let mut firing_neighbors = 0;
+fn count_firing_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
+	let mut firing_neighbors = count_firing_row_neighbors(board, row, col, true);
 
 	if row > 0 {
-		firing_neighbors += count_firing_row_neighbors(board, row - 1, col);
-	}
-
-	firing_neighbors += count_firing_row_neighbors(board, row, col);
-	// Exclude the central 'self' if it was counted as alive
-	if BriansBrain::state(board[row * BOARD_WIDTH + col]) == State::Firing {
-		firing_neighbors -= 1;
+		firing_neighbors <<= 3;
+		firing_neighbors |= count_firing_row_neighbors(board, row - 1, col, false);
 	}
 
 	if row + 1 < BOARD_HEIGHT {
-		firing_neighbors += count_firing_row_neighbors(board, row + 1, col);
+		firing_neighbors <<= 3;
+		firing_neighbors |= count_firing_row_neighbors(board, row + 1, col, false);
 	}
 
-	firing_neighbors
+	firing_neighbors.count_ones()
 }

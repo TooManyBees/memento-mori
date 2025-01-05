@@ -66,47 +66,42 @@ impl std::fmt::Debug for Debug {
 	}
 }
 
-fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
+fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_center: bool) -> u8 {
 	let idx = row * BOARD_WIDTH + col;
 
-	let mut live = if Life::state(board[idx]) == State::Alive {
-		1
-	} else {
+	let mut live = if exclude_center {
 		0
+	} else {
+		board[idx].state & 0b01
 	};
 
 	if col > 0 {
-		if Life::state(board[idx - 1]) == State::Alive {
-			live += 1;
-		}
+		live <<= 1;
+		live |= board[idx - 1].state & 0b01;
 	}
 
 	if (col + 1) < BOARD_WIDTH {
-		if Life::state(board[idx + 1]) == State::Alive {
-			live += 1;
-		}
+		live <<= 1;
+		live |= board[idx + 1].state & 0b01;
 	}
+
 	live
 }
 
-fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
-	let mut live_neighbors = 0;
+fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
+	let mut live_neighbors = count_live_row_neighbors(board, row, col, true);
 
 	if row > 0 {
-		live_neighbors += count_live_row_neighbors(board, row - 1, col);
-	}
-
-	live_neighbors += count_live_row_neighbors(board, row, col);
-	// Exclude the central 'self' if it was counted as alive
-	if Life::state(board[row * BOARD_WIDTH + col]) == State::Alive {
-		live_neighbors -= 1;
+		live_neighbors <<= 3;
+		live_neighbors |= count_live_row_neighbors(board, row - 1, col, false);
 	}
 
 	if row + 1 < BOARD_HEIGHT {
-		live_neighbors += count_live_row_neighbors(board, row + 1, col);
+		live_neighbors <<= 3;
+		live_neighbors |= count_live_row_neighbors(board, row + 1, col, false);
 	}
 
-	live_neighbors
+	live_neighbors.count_ones()
 }
 
 fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
