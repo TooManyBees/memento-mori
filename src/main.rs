@@ -2,7 +2,7 @@ mod rules;
 mod world;
 
 use crate::rules::Ruleset;
-use crate::world::{Cell, World, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
 const CELL_SIZE: usize = 4;
@@ -20,6 +20,7 @@ struct Brush {
 	size: f32,
 	pos: Vec2,
 	ruleset: Ruleset,
+	col_row: (usize, usize),
 }
 
 struct Model {
@@ -57,6 +58,7 @@ fn model(app: &App) -> Model {
 			pos: Vec2::ZERO,
 			// ruleset: Default::default(),
 			ruleset: crate::rules::Ruleset::BriansBrain,
+			col_row: (0, 0),
 		},
 		draw_brush: false,
 		drawing: false,
@@ -74,7 +76,10 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::Unfocused => app.set_loop_mode(LoopMode::loop_ntimes(0)),
 			WindowEvent::MouseEntered => model.draw_brush = true,
 			WindowEvent::MouseExited => model.draw_brush = false,
-			WindowEvent::MouseMoved(pos) => model.brush.pos = pos,
+			WindowEvent::MouseMoved(pos) => {
+				model.brush.pos = pos;
+				model.brush.col_row = get_cell_pos_under_pointer(pos);
+			}
 			WindowEvent::MousePressed(MouseButton::Left) => model.drawing = true,
 			WindowEvent::MouseReleased(MouseButton::Left) => model.drawing = false,
 			WindowEvent::MousePressed(MouseButton::Right) => println!("Mouse pressed: Right"),
@@ -91,7 +96,18 @@ fn event(app: &App, model: &mut Model, event: Event) {
 	}
 }
 
-fn paint(model: &mut Model, f: fn(&mut [Cell], &Brush, Ruleset, usize)) {
+fn get_cell_pos_under_pointer(pos: Vec2) -> (usize, usize) {
+	const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
+	const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
+	let brush_px_y = (pos.y - WINDOW_HEIGHT * 0.5) * -1.0;
+	let brush_px_x = pos.x + WINDOW_WIDTH * 0.5;
+	let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
+	let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
+
+	(brush_col, brush_row)
+}
+
+fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
 	const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
 	const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
 	let brush_px_y = (model.brush.pos.y - WINDOW_HEIGHT * 0.5) * -1.0;
@@ -113,15 +129,13 @@ fn paint(model: &mut Model, f: fn(&mut [Cell], &Brush, Ruleset, usize)) {
 	};
 	let max_col = (brush_col + model.brush.size as usize).min(BOARD_WIDTH - 1);
 
-	let next_board = model.world.next_board_mut();
-
-	// If you're clicking the app, you are by definition clicking a valid cell,
-	// so the following slice index will be safe. However, if you click and drag,
-	// you are able to can keep the app running while you move the mouse outside
-	// of the valid area, so we must still clamp the mouse's position.
-	let valid_brush_row = brush_row.max(min_row).min(max_row);
-	let valid_brush_col = brush_col.max(min_col).min(max_col);
-	let brush_ruleset = next_board[valid_brush_row * BOARD_WIDTH + valid_brush_col].ruleset;
+	// // If you're clicking the app, you are by definition clicking a valid cell,
+	// // so the following slice index will be safe. However, if you click and drag,
+	// // you are able to can keep the app running while you move the mouse outside
+	// // of the valid area, so we must still clamp the mouse's position.
+	// let valid_brush_row = brush_row.max(min_row).min(max_row);
+	// let valid_brush_col = brush_col.max(min_col).min(max_col);
+	// let brush_ruleset = next_board[valid_brush_row * BOARD_WIDTH + valid_brush_col].ruleset;
 
 	for check_row in min_row..=max_row {
 		let check_px_y = (check_row as f32 + 0.5) * CELL_SIZE as f32;
@@ -131,7 +145,7 @@ fn paint(model: &mut Model, f: fn(&mut [Cell], &Brush, Ruleset, usize)) {
 				< (model.brush.size * CELL_SIZE as f32).pow(2);
 			if inside {
 				let idx = check_row * BOARD_WIDTH + check_col;
-				f(next_board, &model.brush, brush_ruleset, idx);
+				f(&mut model.world, &model.brush, idx);
 			}
 		}
 	}
@@ -141,12 +155,15 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	model.world.generate();
 
 	if model.drawing {
-		fn paint_liveness(board: &mut [Cell], _brush: &Brush, _ruleset: Ruleset, idx: usize) {
+		fn paint_liveness(world: &mut World, _brush: &Brush, idx: usize) {
+			let board = world.next_board_mut();
 			board[idx] = board[idx].ruleset.on();
 		}
 
-		fn paint_ruleset(board: &mut [Cell], brush: &Brush, _ruleset: Ruleset, idx: usize) {
+		fn paint_ruleset(world: &mut World, brush: &Brush, idx: usize) {
+			let (board, next_board) = world.this_board_and_next();
 			board[idx].ruleset = brush.ruleset;
+			next_board[idx].ruleset = brush.ruleset;
 		}
 
 		if app.keys.mods.ctrl() {
@@ -188,6 +205,25 @@ fn view(app: &App, model: &Model, frame: Frame) {
 			.stroke_weight(2.0)
 			.stroke(RED)
 			.no_fill();
+
+		let wr = app.main_window().rect();
+		if wr.contains(model.brush.pos) {
+			let (col, row) = model.brush.col_row;
+			let brush_idx = row * BOARD_WIDTH + col;
+			if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
+				let cell = board[brush_idx];
+				let text = format!("{:?}({:02b})", cell.ruleset, cell.state);
+				let text_width = (text.len() * 6) as f32;
+				let wr = wr.pad(20.0);
+				draw.rect()
+					.color(BLACK)
+					.x_y(wr.left()+ text_width * 0.5, wr.bottom())
+					.w_h(text_width, 20.0);
+				draw
+					.text(&text)
+					.x_y(wr.left() + text_width * 0.5, wr.bottom());
+			}
+		}
 	}
 
 	draw.to_frame(app, &frame).unwrap();

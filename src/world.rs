@@ -49,10 +49,10 @@ impl World {
 		}
 	}
 
-	pub fn this_board_and_next(&mut self) -> (&[Cell], &mut [Cell]) {
+	pub fn this_board_and_next(&mut self) -> (&mut [Cell], &mut [Cell]) {
 		match self.current_board {
-			CurrentBoard::A => (&self.state_a, &mut self.state_b),
-			CurrentBoard::B => (&self.state_b, &mut self.state_a),
+			CurrentBoard::A => (&mut self.state_a, &mut self.state_b),
+			CurrentBoard::B => (&mut self.state_b, &mut self.state_a),
 		}
 	}
 
