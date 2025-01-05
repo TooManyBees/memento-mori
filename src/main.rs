@@ -40,16 +40,31 @@ fn model(app: &App) -> Model {
 		.build()
 		.unwrap();
 
-	let mesh = (0..(BOARD_WIDTH * BOARD_HEIGHT)).flat_map(|i| {
-		let row = i / BOARD_WIDTH;
-		let col = i % BOARD_WIDTH;
-		geom::Quad([
-			pt3((col * CELL_SIZE) as f32, (row * CELL_SIZE) as f32, 0.0),
-			pt3(((col + 1) * CELL_SIZE) as f32, (row * CELL_SIZE) as f32, 0.0),
-			pt3(((col + 1) * CELL_SIZE) as f32, ((row + 1) * CELL_SIZE) as f32, 0.0),
-			pt3((col * CELL_SIZE) as f32, ((row + 1) * CELL_SIZE) as f32, 0.0),
-		]).triangles_iter()
-	}).collect();
+	let mesh = (0..(BOARD_WIDTH * BOARD_HEIGHT))
+		.flat_map(|i| {
+			let row = i / BOARD_WIDTH;
+			let col = i % BOARD_WIDTH;
+			geom::Quad([
+				pt3((col * CELL_SIZE) as f32, (row * CELL_SIZE) as f32, 0.0),
+				pt3(
+					((col + 1) * CELL_SIZE) as f32,
+					(row * CELL_SIZE) as f32,
+					0.0,
+				),
+				pt3(
+					((col + 1) * CELL_SIZE) as f32,
+					((row + 1) * CELL_SIZE) as f32,
+					0.0,
+				),
+				pt3(
+					(col * CELL_SIZE) as f32,
+					((row + 1) * CELL_SIZE) as f32,
+					0.0,
+				),
+			])
+			.triangles_iter()
+		})
+		.collect();
 
 	Model {
 		world: World::new(),
@@ -187,10 +202,15 @@ fn view(app: &App, model: &Model, frame: Frame) {
 		.scale_y(-1.0);
 
 	let board = model.world.board();
-	let colored_tris = model.mesh.chunks_exact(2).zip(board.iter()).flat_map(|(tris, cell)| {
-		let cell_color = cell.ruleset.color(*cell);
-		tris.into_iter().map(move |tri| tri.map_vertices(|v| (v, cell_color)))
-	});
+	let colored_tris = model
+		.mesh
+		.chunks_exact(2)
+		.zip(board.iter())
+		.flat_map(|(tris, cell)| {
+			let cell_color = cell.ruleset.color(*cell);
+			tris.into_iter()
+				.map(move |tri| tri.map_vertices(|v| (v, cell_color)))
+		});
 
 	draw.mesh().tris_colored(colored_tris);
 
@@ -217,10 +237,9 @@ fn view(app: &App, model: &Model, frame: Frame) {
 				let wr = wr.pad(20.0);
 				draw.rect()
 					.color(BLACK)
-					.x_y(wr.left()+ text_width * 0.5, wr.bottom())
+					.x_y(wr.left() + text_width * 0.5, wr.bottom())
 					.w_h(text_width, 20.0);
-				draw
-					.text(&text)
+				draw.text(&text)
 					.x_y(wr.left() + text_width * 0.5, wr.bottom());
 			}
 		}
