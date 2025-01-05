@@ -29,17 +29,17 @@ impl BriansBrain {
 	pub fn random() -> Cell {
 		Cell {
 			ruleset: Ruleset::BriansBrain,
-			state: rand::random_range::<u8>(0, 3),
+			state: rand::random_range(0, 3),
 		}
 	}
 
 	fn state(cell: Cell) -> State {
-		if cell.state < 1 {
+		if cell.state <= State::Dead as u8 {
 			State::Dead
-		} else if cell.state == 1 {
-			State::Refractory
-		} else {
+		} else if cell.state == State::Firing as u8 {
 			State::Firing
+		} else {
+			State::Refractory
 		}
 	}
 
@@ -65,8 +65,8 @@ impl BriansBrain {
 #[repr(u8)]
 enum State {
 	Dead = 0,
-	Refractory = 1,
-	Firing = 2,
+	Firing = 1,
+	Refractory = 2,
 }
 
 pub struct Debug(u8);

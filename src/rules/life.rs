@@ -22,12 +22,12 @@ impl Life {
 	pub fn random() -> Cell {
 		Cell {
 			ruleset: Ruleset::Life,
-			state: rand::random_range::<u8>(0, 2),
+			state: rand::random_range(0, 2),
 		}
 	}
 
 	fn state(cell: Cell) -> State {
-		if cell.state >= 1 {
+		if cell.state >= State::Alive as u8 {
 			State::Alive
 		} else {
 			State::Dead
