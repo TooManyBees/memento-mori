@@ -1,5 +1,5 @@
 use crate::rules::Ruleset;
-use crate::world::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::color::{encoding::Srgb, rgb::Rgb, BLUE, WHITE};
 use nannou::rand;
 
@@ -56,7 +56,7 @@ impl BriansBrain {
 		Debug(BriansBrain::state(cell) as u8)
 	}
 
-	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
+	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
 	}
 }
@@ -77,7 +77,7 @@ impl std::fmt::Debug for Debug {
 	}
 }
 
-fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
+fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 	let idx = row * BOARD_WIDTH + col;
 	match BriansBrain::state(board[idx]) {
 		State::Firing => BriansBrain::refractory(),
@@ -93,7 +93,7 @@ fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 	}
 }
 
-fn count_firing_row_neighbors(board: &Board, row: usize, col: usize) -> u8 {
+fn count_firing_row_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
 	let idx = row * BOARD_WIDTH + col;
 
 	let mut live = if BriansBrain::state(board[idx]) == State::Firing {
@@ -116,7 +116,7 @@ fn count_firing_row_neighbors(board: &Board, row: usize, col: usize) -> u8 {
 	live
 }
 
-fn count_firing_neighbors(board: &Board, row: usize, col: usize) -> u8 {
+fn count_firing_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
 	let mut firing_neighbors = 0;
 
 	if row > 0 {

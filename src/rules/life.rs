@@ -1,5 +1,5 @@
 use crate::rules::Ruleset;
-use crate::world::{Board, Cell, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::color::{encoding::Srgb, rgb::Rgb, WHITE};
 use nannou::rand;
 
@@ -46,7 +46,7 @@ impl Life {
 		Debug(Life::state(cell) as u8)
 	}
 
-	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
+	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
 	}
 }
@@ -66,7 +66,7 @@ impl std::fmt::Debug for Debug {
 	}
 }
 
-fn count_live_row_neighbors(board: &Board, row: usize, col: usize) -> u8 {
+fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
 	let idx = row * BOARD_WIDTH + col;
 
 	let mut live = if Life::state(board[idx]) == State::Alive {
@@ -89,7 +89,7 @@ fn count_live_row_neighbors(board: &Board, row: usize, col: usize) -> u8 {
 	live
 }
 
-fn count_live_neighbors(board: &Board, row: usize, col: usize) -> u8 {
+fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u8 {
 	let mut live_neighbors = 0;
 
 	if row > 0 {
@@ -109,7 +109,7 @@ fn count_live_neighbors(board: &Board, row: usize, col: usize) -> u8 {
 	live_neighbors
 }
 
-fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
+fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 	let live_neighbors = count_live_neighbors(board, row, col);
 	let idx = row * BOARD_WIDTH + col;
 

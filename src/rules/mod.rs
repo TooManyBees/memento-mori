@@ -1,7 +1,7 @@
 mod brians_brain;
 mod life;
 
-use crate::world::{Board, Cell};
+use crate::world::Cell;
 pub use brians_brain::BriansBrain;
 pub use life::Life;
 use nannou::color::{encoding::Srgb, rgb::Rgb};
@@ -40,7 +40,7 @@ impl Ruleset {
 		}
 	}
 
-	pub fn next_cell_state(&self, board: &Board, row: usize, col: usize) -> Cell {
+	pub fn next_cell_state(&self, board: &[Cell], row: usize, col: usize) -> Cell {
 		match self {
 			Ruleset::Life => Life::next_cell_state(board, row, col),
 			Ruleset::BriansBrain => BriansBrain::next_cell_state(board, row, col),

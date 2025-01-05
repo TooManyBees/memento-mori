@@ -9,18 +9,16 @@ pub struct Cell {
 	pub state: u8,
 }
 
-pub type Board = [Cell; BOARD_WIDTH * BOARD_HEIGHT];
-
 #[derive(Clone, Debug)]
 pub struct World {
-	state_a: Board,
-	state_b: Board,
+	state_a: Vec<Cell>,
+	state_b: Vec<Cell>,
 	current_board: CurrentBoard,
 }
 
 impl World {
 	pub fn new() -> Self {
-		let state_a = [Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
+		let state_a = vec![Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
 		let state_b = state_a.clone();
 
 		World {
@@ -30,28 +28,28 @@ impl World {
 		}
 	}
 
-	pub fn board(&self) -> &Board {
+	pub fn board(&self) -> &[Cell] {
 		match self.current_board {
 			CurrentBoard::A => &self.state_a,
 			CurrentBoard::B => &self.state_b,
 		}
 	}
 
-	fn board_mut(&mut self) -> &mut Board {
+	fn board_mut(&mut self) -> &mut [Cell] {
 		match self.current_board {
 			CurrentBoard::A => &mut self.state_a,
 			CurrentBoard::B => &mut self.state_b,
 		}
 	}
 
-	pub fn next_board_mut(&mut self) -> &mut Board {
+	pub fn next_board_mut(&mut self) -> &mut [Cell] {
 		match self.current_board {
 			CurrentBoard::A => &mut self.state_b,
 			CurrentBoard::B => &mut self.state_a,
 		}
 	}
 
-	pub fn this_board_and_next(&mut self) -> (&Board, &mut Board) {
+	pub fn this_board_and_next(&mut self) -> (&[Cell], &mut [Cell]) {
 		match self.current_board {
 			CurrentBoard::A => (&self.state_a, &mut self.state_b),
 			CurrentBoard::B => (&self.state_b, &mut self.state_a),

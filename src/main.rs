@@ -2,7 +2,7 @@ mod rules;
 mod world;
 
 use crate::rules::Ruleset;
-use crate::world::{Board, World, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Cell, World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
 const CELL_SIZE: u32 = 16;
@@ -78,7 +78,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 	}
 }
 
-fn paint(model: &mut Model, f: fn(&mut Board, &Brush, Ruleset, usize)) {
+fn paint(model: &mut Model, f: fn(&mut [Cell], &Brush, Ruleset, usize)) {
 	const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
 	const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
 	let brush_px_y = (model.brush.pos.y - WINDOW_HEIGHT * 0.5) * -1.0;
@@ -128,11 +128,11 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	model.world.generate();
 
 	if model.drawing {
-		fn paint_liveness(board: &mut Board, _brush: &Brush, _ruleset: Ruleset, idx: usize) {
+		fn paint_liveness(board: &mut [Cell], _brush: &Brush, _ruleset: Ruleset, idx: usize) {
 			board[idx] = board[idx].ruleset.on();
 		}
 
-		fn paint_ruleset(board: &mut Board, brush: &Brush, _ruleset: Ruleset, idx: usize) {
+		fn paint_ruleset(board: &mut [Cell], brush: &Brush, _ruleset: Ruleset, idx: usize) {
 			board[idx].ruleset = brush.ruleset;
 		}
 
