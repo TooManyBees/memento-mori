@@ -2,7 +2,7 @@ mod mesh;
 mod rules;
 mod world;
 
-use crate::mesh::{make_mesh_data, BufferData};
+use crate::mesh::make_mesh_data;
 use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
@@ -36,9 +36,6 @@ struct Uniforms {
 struct Graphics {
 	vertex_buffer: wgpu::Buffer,
 	vertex_count: u32,
-	// index_buffer: wgpu::Buffer,
-	// index_count: u32,
-	instance_buffer: wgpu::Buffer,
 	instance_count: u32,
 	color_buffer: wgpu::Buffer,
 	bind_group: wgpu::BindGroup,
@@ -50,7 +47,6 @@ struct Model {
 	brush: Brush,
 	draw_brush: bool,
 	drawing: bool,
-	mesh: Vec<geom::Tri<Vec3>>,
 	graphics: Graphics,
 }
 
@@ -63,11 +59,10 @@ fn model(app: &App) -> Model {
 		.build()
 		.unwrap();
 
-	let mesh_data = make_mesh_data(BOARD_WIDTH, BOARD_HEIGHT, CELL_SIZE as f32);
+	let mesh_data = make_mesh_data(BOARD_WIDTH, BOARD_HEIGHT);
 	let vertex_bytes = unsafe { wgpu::bytes::from_slice(&mesh_data.vertices) };
 	let instance_bytes = unsafe { wgpu::bytes::from_slice(&mesh_data.instances) };
-	let dummy_colors = vec![mesh::Color(1.0, 1.0, 1.0); mesh_data.instances.len()];
-	let color_bytes = unsafe { wgpu::bytes::from_slice(&dummy_colors) };
+	let color_bytes = unsafe { wgpu::bytes::from_slice(&mesh_data.colors) };
 	let uniforms = Uniforms {
 		rows: BOARD_HEIGHT as u32,
 		cols: BOARD_WIDTH as u32,
@@ -108,7 +103,7 @@ fn model(app: &App) -> Model {
 	let bind_group = wgpu::BindGroupBuilder::new()
 		.buffer::<Uniforms>(&uniforms_buffer, 0..1)
 		.buffer::<mesh::Vertex>(&instance_buffer, 0..mesh_data.instances.len())
-		.buffer::<mesh::Color>(&color_buffer, 0..dummy_colors.len())
+		.buffer::<mesh::Color>(&color_buffer, 0..mesh_data.colors.len())
 		.build(device, &bind_group_layout);
 	let pipeline_layout = wgpu::create_pipeline_layout(device, None, &[&bind_group_layout], &[]); // TODO what??
 	let render_pipeline = wgpu::RenderPipelineBuilder::from_layout(&pipeline_layout, &shader_mod)
@@ -123,38 +118,11 @@ fn model(app: &App) -> Model {
 	let graphics = Graphics {
 		vertex_buffer,
 		vertex_count: mesh_data.vertices.len() as u32,
-		instance_buffer,
 		instance_count: mesh_data.instances.len() as u32,
 		color_buffer,
 		bind_group,
 		render_pipeline,
 	};
-
-	let mesh = (0..(BOARD_WIDTH * BOARD_HEIGHT))
-		.flat_map(|i| {
-			let row = i / BOARD_WIDTH;
-			let col = i % BOARD_WIDTH;
-			geom::Quad([
-				pt3((col * CELL_SIZE) as f32, (row * CELL_SIZE) as f32, 0.0),
-				pt3(
-					((col + 1) * CELL_SIZE) as f32,
-					(row * CELL_SIZE) as f32,
-					0.0,
-				),
-				pt3(
-					((col + 1) * CELL_SIZE) as f32,
-					((row + 1) * CELL_SIZE) as f32,
-					0.0,
-				),
-				pt3(
-					(col * CELL_SIZE) as f32,
-					((row + 1) * CELL_SIZE) as f32,
-					0.0,
-				),
-			])
-			.triangles_iter()
-		})
-		.collect();
 
 	Model {
 		world: World::new(),
@@ -167,7 +135,6 @@ fn model(app: &App) -> Model {
 		},
 		draw_brush: false,
 		drawing: false,
-		mesh,
 		graphics,
 	}
 }
@@ -283,95 +250,26 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
-	// Turn cartesian coordinates into graphics coordinates
-	let mut draw = app
-		.draw()
-		.x_y(
-			(BOARD_WIDTH * CELL_SIZE) as f32 * -0.5,
-			(BOARD_HEIGHT * CELL_SIZE) as f32 * 0.5,
-		)
-		.scale_y(-1.0);
-
 	let board = model.world.board();
-	// let colored_tris = model
-	// 	.mesh
-	// 	.chunks_exact(2)
-	// 	.zip(board.iter())
-	// 	.flat_map(|(tris, cell)| {
-	// 		let cell_color = cell.ruleset.color(*cell);
-	// 		tris.into_iter()
-	// 			.map(move |tri| tri.map_vertices(|v| (v, cell_color)))
-	// 	});
-
-	// draw.mesh().tris_colored(colored_tris);
-
-	// if model.draw_brush {
-	// 	draw = draw.scale_y(-1.0).x_y(
-	// 		(BOARD_WIDTH * CELL_SIZE) as f32 * 0.5,
-	// 		(BOARD_HEIGHT * CELL_SIZE) as f32 * -0.5,
-	// 	);
-	// 	draw.ellipse()
-	// 		.radius(model.brush.size * CELL_SIZE as f32)
-	// 		.xy(model.brush.pos)
-	// 		.stroke_weight(2.0)
-	// 		.stroke(RED)
-	// 		.no_fill();
-
-	// 	let wr = app.main_window().rect();
-	// 	if wr.contains(model.brush.pos) {
-	// 		let (col, row) = model.brush.col_row;
-	// 		let brush_idx = row * BOARD_WIDTH + col;
-	// 		if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
-	// 			let cell = board[brush_idx];
-	// 			let text = format!("{:?}({:02b})", cell.ruleset, cell.state);
-	// 			let text_width = (text.len() * 6) as f32;
-	// 			let wr = wr.pad(20.0);
-	// 			draw.rect()
-	// 				.color(BLACK)
-	// 				.x_y(wr.left() + text_width * 0.5, wr.bottom())
-	// 				.w_h(text_width, 20.0);
-	// 			draw.text(&text)
-	// 				.x_y(wr.left() + text_width * 0.5, wr.bottom());
-	// 		}
-	// 	}
-	// }
-
-	// draw.to_frame(app, &frame).unwrap();
-
 	let cell_colors: Vec<_> = board
 		.iter()
 		.map(|cell| {
-			// use nannou::color::{encoding::Srgb, rgb::Rgb};
 			let color = cell.ruleset.color(*cell);
-			// let color_f32 = color.into_format::<Rgb<Srgb, f32>>();
 			mesh::Color(
 				color.red as f32 / 255f32,
 				color.green as f32 / 255f32,
 				color.blue as f32 / 255f32,
+				1.0,
 			)
 		})
 		.collect();
 	let colors_bytes = unsafe { wgpu::bytes::from_slice(&cell_colors) };
-	let device = frame.device_queue_pair().device();
-	// frame
-	// 	.device_queue_pair()
-	// 	.queue()
-	// 	.write_buffer(&model.graphics.color_buffer, 0, &colors_bytes);
+	frame
+		.device_queue_pair()
+		.queue()
+		.write_buffer(&model.graphics.color_buffer, 0, &colors_bytes);
 
 	let mut encoder = frame.command_encoder();
-
-	let new_color_buffer = device.create_buffer_init(&BufferInitDescriptor {
-		label: Some("what am i even doing here"),
-		contents: colors_bytes,
-		usage: wgpu::BufferUsages::COPY_SRC,
-	});
-	encoder.copy_buffer_to_buffer(
-		&new_color_buffer,
-		0,
-		&model.graphics.color_buffer,
-		0,
-		std::mem::size_of::<mesh::Color>() as wgpu::BufferAddress,
-	);
 
 	let mut render_pass = wgpu::RenderPassBuilder::new()
 		.color_attachment(frame.texture_view(), |color| color)
@@ -380,13 +278,38 @@ fn view(app: &App, model: &Model, frame: Frame) {
 	render_pass.set_pipeline(&model.graphics.render_pipeline);
 	render_pass.set_bind_group(0, &model.graphics.bind_group, &[]);
 	render_pass.set_vertex_buffer(0, model.graphics.vertex_buffer.slice(..));
-	// render_pass.set_index_buffer(
-	// 	model.graphics.index_buffer.slice(..),
-	// 	wgpu::IndexFormat::Uint32,
-	// );
-	// render_pass.draw_indexed(0..model.graphics.index_count, 0, 0..1);
 	render_pass.draw(
 		0..model.graphics.vertex_count,
 		0..model.graphics.instance_count,
 	);
+
+
+	if model.draw_brush {
+		// let draw = app.draw();
+		// draw.ellipse()
+		// 	.radius(model.brush.size * CELL_SIZE as f32)
+		// 	.xy(model.brush.pos)
+		// 	.stroke_weight(2.0)
+		// 	.stroke(RED)
+		// 	.no_fill();
+
+		// let wr = app.main_window().rect();
+		// if wr.contains(model.brush.pos) {
+		// 	let (col, row) = model.brush.col_row;
+		// 	let brush_idx = row * BOARD_WIDTH + col;
+		// 	if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
+		// 		let cell = board[brush_idx];
+		// 		let text = format!("{:?}({:02b})", cell.ruleset, cell.state);
+		// 		let text_width = (text.len() * 6) as f32;
+		// 		let wr = wr.pad(20.0);
+		// 		draw.rect()
+		// 			.color(BLACK)
+		// 			.x_y(wr.left() + text_width * 0.5, wr.bottom())
+		// 			.w_h(text_width, 20.0);
+		// 		draw.text(&text)
+		// 			.x_y(wr.left() + text_width * 0.5, wr.bottom());
+		// 	}
+		// }
+		// draw.to_frame(app, &frame).unwrap();
+	}
 }

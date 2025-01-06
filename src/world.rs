@@ -64,6 +64,18 @@ impl World {
 
 	pub fn generate(&mut self) {
 		let (board, next_board) = self.this_board_and_next();
+		// next_board
+		// 	.par_chunks_exact_mut(BOARD_WIDTH)
+		// 	.enumerate()
+		// 	.for_each(|(row, next_chunk)| {
+		// 		for col in 0..BOARD_WIDTH {
+		// 			let idx = row * BOARD_WIDTH + col;
+		// 			let cell = board[idx];
+		// 			let next_cell = cell.ruleset.next_cell_state(board, row, col);
+		// 			next_chunk[col].state = next_cell.state;
+		// 		}
+		// 	});
+
 		for row in 0..BOARD_HEIGHT {
 			for col in 0..BOARD_WIDTH {
 				let idx = row * BOARD_WIDTH + col;
