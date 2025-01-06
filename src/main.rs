@@ -50,8 +50,7 @@ fn model(app: &App) -> Model {
 		brush: Brush {
 			size: 8.0,
 			pos: Vec2::ZERO,
-			// ruleset: Default::default(),
-			ruleset: crate::rules::Ruleset::BriansBrain,
+			ruleset: Default::default(),
 			col_row: (0, 0),
 		},
 		draw_brush: false,
@@ -81,6 +80,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::MousePressed(MouseButton::Middle) => println!("Mouse pressed: Middle"),
 			WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
+			WindowEvent::KeyPressed(Key::Tab) => model.brush.ruleset = model.brush.ruleset.next(),
 			WindowEvent::MouseWheel(MouseScrollDelta::LineDelta(_, delta), _) => {
 				model.brush.size = (model.brush.size + delta).max(1.0).min(16.0)
 			}

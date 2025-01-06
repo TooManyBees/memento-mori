@@ -53,4 +53,12 @@ impl Ruleset {
 			Ruleset::BriansBrain => BriansBrain::next_cell_state(board, row, col),
 		}
 	}
+
+	pub fn next(&self) -> Ruleset {
+		match self {
+			Ruleset::Life => Ruleset::AntiLife,
+			Ruleset::AntiLife => Ruleset::BriansBrain,
+			Ruleset::BriansBrain => Ruleset::Life,
+		}
+	}
 }
