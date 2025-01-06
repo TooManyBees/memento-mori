@@ -264,52 +264,56 @@ fn view(app: &App, model: &Model, frame: Frame) {
 		})
 		.collect();
 	let colors_bytes = unsafe { wgpu::bytes::from_slice(&cell_colors) };
+
 	frame
 		.device_queue_pair()
 		.queue()
 		.write_buffer(&model.graphics.color_buffer, 0, &colors_bytes);
 
-	let mut encoder = frame.command_encoder();
+	// encoder must be dropped before the pointer draw calls to avoid
+	// a double borrow runtime panic
+	{
+		let mut encoder = frame.command_encoder();
+		let mut render_pass = wgpu::RenderPassBuilder::new()
+			.color_attachment(frame.texture_view(), |color| color)
+			.begin(&mut encoder);
 
-	let mut render_pass = wgpu::RenderPassBuilder::new()
-		.color_attachment(frame.texture_view(), |color| color)
-		.begin(&mut encoder);
-
-	render_pass.set_pipeline(&model.graphics.render_pipeline);
-	render_pass.set_bind_group(0, &model.graphics.bind_group, &[]);
-	render_pass.set_vertex_buffer(0, model.graphics.vertex_buffer.slice(..));
-	render_pass.draw(
-		0..model.graphics.vertex_count,
-		0..model.graphics.instance_count,
-	);
+		render_pass.set_pipeline(&model.graphics.render_pipeline);
+		render_pass.set_bind_group(0, &model.graphics.bind_group, &[]);
+		render_pass.set_vertex_buffer(0, model.graphics.vertex_buffer.slice(..));
+		render_pass.draw(
+			0..model.graphics.vertex_count,
+			0..model.graphics.instance_count,
+		);
+	}
 
 
 	if model.draw_brush {
-		// let draw = app.draw();
-		// draw.ellipse()
-		// 	.radius(model.brush.size * CELL_SIZE as f32)
-		// 	.xy(model.brush.pos)
-		// 	.stroke_weight(2.0)
-		// 	.stroke(RED)
-		// 	.no_fill();
+		let draw = app.draw();
+		draw.ellipse()
+			.radius(model.brush.size * CELL_SIZE as f32)
+			.xy(model.brush.pos)
+			.stroke_weight(2.0)
+			.stroke(RED)
+			.no_fill();
 
-		// let wr = app.main_window().rect();
-		// if wr.contains(model.brush.pos) {
-		// 	let (col, row) = model.brush.col_row;
-		// 	let brush_idx = row * BOARD_WIDTH + col;
-		// 	if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
-		// 		let cell = board[brush_idx];
-		// 		let text = format!("{:?}({:02b})", cell.ruleset, cell.state);
-		// 		let text_width = (text.len() * 6) as f32;
-		// 		let wr = wr.pad(20.0);
-		// 		draw.rect()
-		// 			.color(BLACK)
-		// 			.x_y(wr.left() + text_width * 0.5, wr.bottom())
-		// 			.w_h(text_width, 20.0);
-		// 		draw.text(&text)
-		// 			.x_y(wr.left() + text_width * 0.5, wr.bottom());
-		// 	}
-		// }
-		// draw.to_frame(app, &frame).unwrap();
+		let wr = app.main_window().rect();
+		if wr.contains(model.brush.pos) {
+			let (col, row) = model.brush.col_row;
+			let brush_idx = row * BOARD_WIDTH + col;
+			if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
+				let cell = board[brush_idx];
+				let text = format!("{:?}({:02b})", cell.ruleset, cell.state);
+				let text_width = (text.len() * 6) as f32;
+				let wr = wr.pad(20.0);
+				draw.rect()
+					.color(BLACK)
+					.x_y(wr.left() + text_width * 0.5, wr.bottom())
+					.w_h(text_width, 20.0);
+				draw.text(&text)
+					.x_y(wr.left() + text_width * 0.5, wr.bottom());
+			}
+		}
+		draw.to_frame(app, &frame).unwrap();
 	}
 }
