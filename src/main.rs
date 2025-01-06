@@ -1,8 +1,8 @@
-mod mesh;
+mod graphics;
 mod rules;
 mod world;
 
-use crate::mesh::{make_graphics, render_graphics, Graphics};
+use crate::graphics::{make_graphics, render_graphics, Graphics};
 use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
