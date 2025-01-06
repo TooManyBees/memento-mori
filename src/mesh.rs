@@ -8,9 +8,9 @@ pub struct BufferData {
 #[derive(Clone, Copy)]
 pub struct Vertex(f32, f32);
 
-#[repr(C)]
+#[repr(C, align(16))]
 #[derive(Clone, Copy)]
-pub struct Color(pub f32, pub f32, pub f32, pub f32);
+pub struct Color(pub f32, pub f32, pub f32);
 
 pub fn make_mesh_data(width: usize, height: usize) -> BufferData {
 	let vertices = [
@@ -27,7 +27,7 @@ pub fn make_mesh_data(width: usize, height: usize) -> BufferData {
 	for row in 0..height {
 		for col in 0..width {
 			instances.push(Vertex(col as f32, row as f32));
-			colors.push(Color(col as f32 / width as f32, row as f32 / height as f32, 0.5, 1.0));
+			colors.push(Color(col as f32 / width as f32, row as f32 / height as f32, 0.5));
 		}
 	}
 

@@ -5,7 +5,7 @@ struct Uniforms {
 
 struct VertexOut {
     @builtin(position) pos: vec4f,
-    @location(0) color: vec4f,
+    @location(0) color: vec3f,
 }
 
 @group(0) @binding(0)
@@ -13,7 +13,7 @@ var<uniform> uniforms: Uniforms;
 @group(0) @binding(1)
 var<storage, read> positions: array<vec2f>;
 @group(0) @binding(2)
-var<storage, read> colors: array<vec4f>;
+var<storage, read> colors: array<vec3f>;
 
 @vertex
 fn vert_main(
@@ -37,7 +37,7 @@ fn vert_main(
 
 @fragment
 fn frag_main(
-    @location(0) color: vec4f,
+    @location(0) color: vec3f,
 ) -> @location(0) vec4f {
-    return vec4f(color);
+    return vec4f(color, 1.0);
 }

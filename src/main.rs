@@ -259,7 +259,6 @@ fn view(app: &App, model: &Model, frame: Frame) {
 				color.red as f32 / 255f32,
 				color.green as f32 / 255f32,
 				color.blue as f32 / 255f32,
-				1.0,
 			)
 		})
 		.collect();
