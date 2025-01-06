@@ -39,6 +39,7 @@ fn model(app: &App) -> Model {
 			BOARD_WIDTH as u32 * CELL_SIZE as u32,
 			BOARD_HEIGHT as u32 * CELL_SIZE as u32,
 		)
+		.msaa_samples(1)
 		.build()
 		.unwrap();
 

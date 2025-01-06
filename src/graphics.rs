@@ -116,7 +116,6 @@ pub fn make_graphics(app: &App, width: usize, height: usize) -> Graphics {
 		.fragment_entry_point("frag_main")
 		.color_format(Frame::TEXTURE_FORMAT)
 		.add_vertex_buffer::<Vertex>(&wgpu::vertex_attr_array![0 => Float32x2])
-		.sample_count(4) // FIXME I hate this
 		.build(device);
 
 	Graphics {
