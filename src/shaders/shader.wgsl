@@ -16,7 +16,7 @@ var<storage, read> positions: array<vec2f>;
 var<storage, read> colors: array<vec3f>;
 
 @vertex
-fn main(
+fn vert_main(
     @builtin(instance_index) instance_index: u32,
     @location(0) pos: vec2<f32>,
 ) -> VertexOut {
@@ -33,4 +33,11 @@ fn main(
     //var gray = f32(instance_index)/256.0;
     //out.color = vec3<f32>(gray, gray, gray);
     return out;
+}
+
+@fragment
+fn frag_main(
+    @location(0) color: vec3f,
+) -> @location(0) vec4f {
+    return vec4f(color, 1.0);
 }

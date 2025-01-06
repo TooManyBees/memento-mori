@@ -97,10 +97,8 @@ fn model(app: &App) -> Model {
 		usage: wgpu::BufferUsages::UNIFORM,
 	});
 
-	let vs_desc = wgpu::include_wgsl!("shaders/vertex.wgsl");
-	let fs_desc = wgpu::include_wgsl!("shaders/fragment.wgsl");
-	let vs_mod = device.create_shader_module(vs_desc);
-	let fs_mod = device.create_shader_module(fs_desc);
+	let shader_desc = wgpu::include_wgsl!("shaders/shader.wgsl");
+	let shader_mod = device.create_shader_module(shader_desc);
 
 	let bind_group_layout = wgpu::BindGroupLayoutBuilder::new()
 		.uniform_buffer(wgpu::ShaderStages::VERTEX, false)
@@ -113,8 +111,10 @@ fn model(app: &App) -> Model {
 		.buffer::<mesh::Color>(&color_buffer, 0..dummy_colors.len())
 		.build(device, &bind_group_layout);
 	let pipeline_layout = wgpu::create_pipeline_layout(device, None, &[&bind_group_layout], &[]); // TODO what??
-	let render_pipeline = wgpu::RenderPipelineBuilder::from_layout(&pipeline_layout, &vs_mod)
-		.fragment_shader(&fs_mod)
+	let render_pipeline = wgpu::RenderPipelineBuilder::from_layout(&pipeline_layout, &shader_mod)
+		.fragment_shader(&shader_mod)
+		.vertex_entry_point("vert_main")
+		.fragment_entry_point("frag_main")
 		.color_format(Frame::TEXTURE_FORMAT)
 		.add_vertex_buffer::<mesh::Vertex>(&wgpu::vertex_attr_array![0 => Float32x2])
 		.sample_count(4) // FIXME I hate this
