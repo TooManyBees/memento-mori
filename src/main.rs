@@ -7,7 +7,7 @@ use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 
-const CELL_SIZE: usize = 16;
+const CELL_SIZE: usize = 4;
 
 fn main() {
 	nannou::app(model)

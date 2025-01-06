@@ -1,7 +1,7 @@
 use crate::rules::Ruleset;
 
-pub const BOARD_WIDTH: usize = 16;
-pub const BOARD_HEIGHT: usize = 16;
+pub const BOARD_WIDTH: usize = 256;
+pub const BOARD_HEIGHT: usize = 256;
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Cell {
