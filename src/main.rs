@@ -18,11 +18,18 @@ fn main() {
 		.run();
 }
 
+#[derive(Default)]
+struct ColRow {
+	col: usize,
+	row: usize,
+}
+
+#[derive(Default)]
 struct Brush {
 	size: f32,
 	pos: Vec2,
 	ruleset: Ruleset,
-	col_row: (usize, usize),
+	col_row: ColRow,
 }
 
 struct Model {
@@ -49,9 +56,7 @@ fn model(app: &App) -> Model {
 		world: World::new(),
 		brush: Brush {
 			size: 8.0,
-			pos: Vec2::ZERO,
-			ruleset: Default::default(),
-			col_row: (0, 0),
+			..Default::default()
 		},
 		draw_brush: false,
 		drawing: false,
@@ -90,7 +95,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 	}
 }
 
-fn get_cell_pos_under_pointer(pos: Vec2) -> (usize, usize) {
+fn get_cell_pos_under_pointer(pos: Vec2) -> ColRow {
 	const WINDOW_WIDTH: f32 = BOARD_WIDTH as f32 * CELL_SIZE as f32;
 	const WINDOW_HEIGHT: f32 = BOARD_HEIGHT as f32 * CELL_SIZE as f32;
 	let brush_px_y = (pos.y - WINDOW_HEIGHT * 0.5) * -1.0;
@@ -98,7 +103,7 @@ fn get_cell_pos_under_pointer(pos: Vec2) -> (usize, usize) {
 	let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
 	let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
 
-	(brush_col, brush_row)
+	ColRow { col: brush_col, row: brush_row }
 }
 
 fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
@@ -151,7 +156,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	if model.drawing {
 		fn paint_liveness(world: &mut World, brush: &Brush, idx: usize) {
 			let board = world.next_board_mut();
-			let brush_idx = brush.col_row.1 * BOARD_WIDTH + brush.col_row.0;
+			let brush_idx = brush.col_row.row * BOARD_WIDTH + brush.col_row.col;
 			if board[idx].ruleset == board[brush_idx].ruleset {
 				board[idx] = board[idx].ruleset.on();
 			}
@@ -189,7 +194,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
 		let wr = app.main_window().rect();
 		if wr.contains(model.brush.pos) {
-			let (col, row) = model.brush.col_row;
+			let ColRow { col, row } = model.brush.col_row;
 			let brush_idx = row * BOARD_WIDTH + col;
 			if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
 				let cell = board[brush_idx];
