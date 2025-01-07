@@ -43,6 +43,15 @@ impl Ruleset {
 		}
 	}
 
+	pub fn off(&self) -> Cell {
+		match self {
+			Ruleset::Life => Life::dead(),
+			Ruleset::AntiLife => AntiLife::alive(),
+			Ruleset::BriansBrain => BriansBrain::dead(),
+			Ruleset::Seeds => Seeds::dead(),
+		}
+	}
+
 	pub fn random(&self) -> Cell {
 		match self {
 			Ruleset::Life => Life::random(),

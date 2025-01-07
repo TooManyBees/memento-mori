@@ -84,6 +84,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::MouseReleased(MouseButton::Right) => println!("Mouse released: Right"),
 			WindowEvent::MousePressed(MouseButton::Middle) => println!("Mouse pressed: Middle"),
 			WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
+			WindowEvent::KeyPressed(Key::C) => model.world.clear(),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
 			WindowEvent::KeyPressed(Key::Tab) => model.brush.ruleset = model.brush.ruleset.next(),
 			WindowEvent::MouseWheel(MouseScrollDelta::LineDelta(_, delta), _) => {

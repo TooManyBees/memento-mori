@@ -62,6 +62,12 @@ impl World {
 		}
 	}
 
+	pub fn clear(&mut self) {
+		for cell in self.board_mut() {
+			*cell = cell.ruleset.off();
+		}
+	}
+
 	pub fn generate(&mut self) {
 		let (board, next_board) = self.this_board_and_next();
 		// next_board

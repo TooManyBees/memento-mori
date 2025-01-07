@@ -13,7 +13,7 @@ impl Life {
 		}
 	}
 
-	fn dead() -> Cell {
+	pub fn dead() -> Cell {
 		Cell {
 			ruleset: Ruleset::Life,
 			state: State::Dead as u8,
