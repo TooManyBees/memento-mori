@@ -2,6 +2,7 @@ use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::color::{encoding::Srgb, rgb::Rgb, *};
 use nannou::rand;
+use std::fmt::Write;
 
 pub struct Life;
 impl Life {
@@ -41,13 +42,12 @@ impl Life {
 		}
 	}
 
-	#[allow(dead_code)]
-	pub fn debug(cell: Cell) -> Debug {
-		Debug(Life::state(cell) as u8)
-	}
-
 	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
+	}
+
+	pub fn write_debug<W: Write>(output: &mut W, state: u8) -> std::fmt::Result {
+		write!(output, "{:02b}", state)
 	}
 }
 
@@ -56,14 +56,6 @@ impl Life {
 enum State {
 	Dead = 0,
 	Alive = 1,
-}
-
-pub struct Debug(u8);
-
-impl std::fmt::Debug for Debug {
-	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-		self.0.fmt(fmt)
-	}
 }
 
 fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_center: bool) -> u8 {

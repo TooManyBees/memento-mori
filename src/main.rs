@@ -198,7 +198,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 			let brush_idx = row * BOARD_WIDTH + col;
 			if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
 				let cell = board[brush_idx];
-				let text = format!("{:?}({:02b})", cell.ruleset, cell.state);
+				let text = cell.ruleset.write_debug(cell);
 				let text_width = (text.len() * 6) as f32;
 				let wr = wr.pad(20.0);
 				draw.rect()

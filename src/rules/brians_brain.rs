@@ -2,6 +2,7 @@ use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::color::{encoding::Srgb, rgb::Rgb, *};
 use nannou::rand;
+use std::fmt::Write;
 
 pub struct BriansBrain;
 impl BriansBrain {
@@ -51,13 +52,12 @@ impl BriansBrain {
 		}
 	}
 
-	#[allow(dead_code)]
-	pub fn debug(cell: Cell) -> Debug {
-		Debug(BriansBrain::state(cell) as u8)
-	}
-
 	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
+	}
+
+	pub fn write_debug<W: Write>(output: &mut W, state: u8) -> std::fmt::Result {
+		write!(output, "{:02b}", state)
 	}
 }
 
@@ -67,14 +67,6 @@ enum State {
 	Dead = 0,
 	Firing = 1,
 	Refractory = 2,
-}
-
-pub struct Debug(u8);
-
-impl std::fmt::Debug for Debug {
-	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-		self.0.fmt(fmt)
-	}
 }
 
 fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {

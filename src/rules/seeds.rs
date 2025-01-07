@@ -2,6 +2,7 @@ use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::color::{encoding::Srgb, rgb::Rgb, *};
 use nannou::rand;
+use std::fmt::Write;
 
 pub struct Seeds;
 impl Seeds {
@@ -53,6 +54,10 @@ impl Seeds {
 				Seeds::dead()
 			}
 		}
+	}
+
+	pub fn write_debug<W: Write>(output: &mut W, state: u8) -> std::fmt::Result {
+		write!(output, "{:02b}", state)
 	}
 }
 

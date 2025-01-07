@@ -9,6 +9,7 @@ pub use brians_brain::BriansBrain;
 pub use life::Life;
 use nannou::color::{encoding::Srgb, rgb::Rgb};
 pub use seeds::Seeds;
+use std::fmt::Write;
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -67,6 +68,19 @@ impl Ruleset {
 			Ruleset::BriansBrain => BriansBrain::next_cell_state(board, row, col),
 			Ruleset::Seeds => Seeds::next_cell_state(board, row, col),
 		}
+	}
+
+	pub fn write_debug(&self, cell: Cell) -> String {
+		let mut output = String::new();
+		write!(&mut output, "{:?}(", cell.ruleset);
+		match self {
+			Ruleset::Life => Life::write_debug(&mut output, cell.state),
+			Ruleset::AntiLife => AntiLife::write_debug(&mut output, cell.state),
+			Ruleset::BriansBrain => BriansBrain::write_debug(&mut output, cell.state),
+			Ruleset::Seeds => Seeds::write_debug(&mut output, cell.state),
+		};
+		write!(&mut output, ")");
+		output
 	}
 
 	pub fn next(&self) -> Ruleset {
