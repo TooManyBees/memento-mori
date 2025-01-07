@@ -72,14 +72,14 @@ impl Ruleset {
 
 	pub fn write_debug(&self, cell: Cell) -> String {
 		let mut output = String::new();
-		write!(&mut output, "{:?}(", cell.ruleset);
+		write!(&mut output, "{:?}(", cell.ruleset).unwrap();
 		match self {
 			Ruleset::Life => Life::write_debug(&mut output, cell.state),
 			Ruleset::AntiLife => AntiLife::write_debug(&mut output, cell.state),
 			Ruleset::BriansBrain => BriansBrain::write_debug(&mut output, cell.state),
 			Ruleset::Seeds => Seeds::write_debug(&mut output, cell.state),
-		};
-		write!(&mut output, ")");
+		}.unwrap();
+		write!(&mut output, ")").unwrap();
 		output
 	}
 
