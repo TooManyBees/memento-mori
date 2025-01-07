@@ -103,7 +103,15 @@ fn get_cell_pos_under_pointer(pos: Vec2) -> ColRow {
 	let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
 	let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
 
-	ColRow { col: brush_col, row: brush_row }
+	// You would think you wouldn't have to clamp the row and col to the board
+	// dimensions because when the mouse is off the board it doesn't produce
+	// mouse events and you can't click on it, but you'd be wrong, because when
+	// you click and drag you can maintain focus on the window while pulling
+	// the pointer out of the window.
+	ColRow {
+		col: brush_col.max(0).min(BOARD_WIDTH - 1),
+		row: brush_row.max(0).min(BOARD_HEIGHT - 1),
+	}
 }
 
 fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
@@ -127,14 +135,6 @@ fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
 		0
 	};
 	let max_col = (brush_col + model.brush.size as usize).min(BOARD_WIDTH - 1);
-
-	// // If you're clicking the app, you are by definition clicking a valid cell,
-	// // so the following slice index will be safe. However, if you click and drag,
-	// // you are able to can keep the app running while you move the mouse outside
-	// // of the valid area, so we must still clamp the mouse's position.
-	// let valid_brush_row = brush_row.max(min_row).min(max_row);
-	// let valid_brush_col = brush_col.max(min_col).min(max_col);
-	// let brush_ruleset = next_board[valid_brush_row * BOARD_WIDTH + valid_brush_col].ruleset;
 
 	for check_row in min_row..=max_row {
 		let check_px_y = (check_row as f32 + 0.5) * CELL_SIZE as f32;
