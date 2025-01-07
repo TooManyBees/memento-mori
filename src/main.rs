@@ -6,8 +6,10 @@ use crate::graphics::{make_graphics, render_graphics, Graphics};
 use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
+use std::time::{Duration, Instant};
 
 const CELL_SIZE: usize = 4;
+const GENERATION_RATE: Duration = Duration::from_millis(1000 / 15);
 
 fn main() {
 	nannou::app(model)
@@ -38,6 +40,7 @@ struct Model {
 	draw_brush: bool,
 	drawing: bool,
 	graphics: Graphics,
+	last_generation_at: Instant,
 }
 
 fn model(app: &App) -> Model {
@@ -61,6 +64,7 @@ fn model(app: &App) -> Model {
 		draw_brush: false,
 		drawing: false,
 		graphics,
+		last_generation_at: Instant::now() - GENERATION_RATE,
 	}
 }
 
@@ -152,7 +156,11 @@ fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
 }
 
 fn update(app: &App, model: &mut Model, _update: Update) {
-	model.world.generate();
+	let advance_simulation = model.last_generation_at.elapsed() >= GENERATION_RATE;
+
+	if advance_simulation {
+		model.world.generate();
+	}
 
 	if model.drawing {
 		fn paint_liveness(world: &mut World, brush: &Brush, idx: usize) {
@@ -176,7 +184,10 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		}
 	}
 
-	model.world.swap();
+	if advance_simulation {
+		model.world.swap();
+		model.last_generation_at = Instant::now();
+	}
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
