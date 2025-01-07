@@ -1,19 +1,30 @@
 mod anti_life;
 mod brians_brain;
 mod life;
+mod seeds;
 
 use crate::world::Cell;
 pub use anti_life::AntiLife;
 pub use brians_brain::BriansBrain;
 pub use life::Life;
 use nannou::color::{encoding::Srgb, rgb::Rgb};
+pub use seeds::Seeds;
 
+#[repr(u8)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Ruleset {
 	Life,
 	AntiLife,
 	BriansBrain,
+	Seeds,
 }
+
+const VARIANTS: &[Ruleset] = &[
+	Ruleset::Life,
+	Ruleset::AntiLife,
+	Ruleset::BriansBrain,
+	Ruleset::Seeds,
+];
 
 impl Default for Ruleset {
 	fn default() -> Ruleset {
@@ -27,6 +38,7 @@ impl Ruleset {
 			Ruleset::Life => Life::alive(),
 			Ruleset::AntiLife => AntiLife::dead(),
 			Ruleset::BriansBrain => BriansBrain::firing(),
+			Ruleset::Seeds => Seeds::alive(),
 		}
 	}
 
@@ -35,6 +47,7 @@ impl Ruleset {
 			Ruleset::Life => Life::random(),
 			Ruleset::AntiLife => AntiLife::random(),
 			Ruleset::BriansBrain => BriansBrain::random(),
+			Ruleset::Seeds => Seeds::random(),
 		}
 	}
 
@@ -43,6 +56,7 @@ impl Ruleset {
 			Ruleset::Life => Life::color(cell),
 			Ruleset::AntiLife => AntiLife::color(cell),
 			Ruleset::BriansBrain => BriansBrain::color(cell),
+			Ruleset::Seeds => Seeds::color(cell),
 		}
 	}
 
@@ -51,14 +65,11 @@ impl Ruleset {
 			Ruleset::Life => Life::next_cell_state(board, row, col),
 			Ruleset::AntiLife => AntiLife::next_cell_state(board, row, col),
 			Ruleset::BriansBrain => BriansBrain::next_cell_state(board, row, col),
+			Ruleset::Seeds => Seeds::next_cell_state(board, row, col),
 		}
 	}
 
 	pub fn next(&self) -> Ruleset {
-		match self {
-			Ruleset::Life => Ruleset::AntiLife,
-			Ruleset::AntiLife => Ruleset::BriansBrain,
-			Ruleset::BriansBrain => Ruleset::Life,
-		}
+		VARIANTS[(*self as u8 as usize + 1) % VARIANTS.len()]
 	}
 }
