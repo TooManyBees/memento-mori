@@ -149,9 +149,12 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	model.world.generate();
 
 	if model.drawing {
-		fn paint_liveness(world: &mut World, _brush: &Brush, idx: usize) {
+		fn paint_liveness(world: &mut World, brush: &Brush, idx: usize) {
 			let board = world.next_board_mut();
-			board[idx] = board[idx].ruleset.on();
+			let brush_idx = brush.col_row.1 * BOARD_WIDTH + brush.col_row.0;
+			if board[idx].ruleset == board[brush_idx].ruleset {
+				board[idx] = board[idx].ruleset.on();
+			}
 		}
 
 		fn paint_ruleset(world: &mut World, brush: &Brush, idx: usize) {
