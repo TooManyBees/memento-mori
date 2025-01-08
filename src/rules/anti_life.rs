@@ -27,18 +27,13 @@ impl AntiLife {
 		}
 	}
 
-	fn state(cell: Cell) -> State {
-		if cell.state >= 1 {
-			State::Alive
-		} else {
-			State::Dead
-		}
-	}
-
 	pub fn color(cell: Cell) -> Rgb<Srgb, f32> {
-		match AntiLife::state(cell) {
-			State::Alive => Rgb::new(1.0, 1.0, 1.0),
-			State::Dead => Rgb::new(0.0, 0.0, 0.0),
+		match cell.state {
+			0b11 => Rgb::new(1.0, 1.0, 1.0),
+			0b10 => Rgb::new(0.0, 0.0, 1.0),
+			0b01 => Rgb::new(0.0, 1.0, 0.0),
+			0b00 => Rgb::new(1.0, 0.0, 0.0),
+			_ => Rgb::new(0.0, 0.0, 0.0), // Black == undefined
 		}
 	}
 
@@ -100,9 +95,23 @@ fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 	let live_neighbors = count_live_neighbors(board, row, col);
 	let idx = row * BOARD_WIDTH + col;
 
-	match (AntiLife::state(board[idx]), live_neighbors) {
-		(State::Alive, x) if x != 5 => AntiLife::alive(),
-		(State::Dead, x) if x != 5 && x != 6 => AntiLife::alive(),
-		_ => AntiLife::dead(),
+	let is_alive = board[idx].state & 0b01 > 0;
+	let state = if is_alive {
+		if live_neighbors != 5 {
+			State::Alive as u8 | 0b10
+		} else {
+			State::Dead as u8 | 0b10
+		}
+	} else {
+		if live_neighbors != 5 && live_neighbors != 6 {
+			State::Alive as u8
+		} else {
+			State::Dead as u8
+		}
+	};
+
+	Cell {
+		ruleset: Ruleset::AntiLife,
+		state,
 	}
 }
