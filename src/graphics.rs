@@ -134,9 +134,9 @@ pub fn render_graphics(frame: &Frame, graphics: &Graphics, board: &[Cell]) {
 		.map(|cell| {
 			let color = cell.ruleset.color(*cell);
 			Color(
-				color.red as f32 / 255f32,
-				color.green as f32 / 255f32,
-				color.blue as f32 / 255f32,
+				color.red,
+				color.green,
+				color.blue,
 			)
 		})
 		.collect();

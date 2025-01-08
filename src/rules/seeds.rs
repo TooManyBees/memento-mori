@@ -1,6 +1,6 @@
 use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
-use nannou::color::{encoding::Srgb, rgb::Rgb, *};
+use nannou::color::{encoding::Srgb, rgb::Rgb};
 use nannou::rand;
 use std::fmt::Write;
 
@@ -35,10 +35,10 @@ impl Seeds {
 		}
 	}
 
-	pub fn color(cell: Cell) -> Rgb<Srgb, u8> {
+	pub fn color(cell: Cell) -> Rgb<Srgb, f32> {
 		match Seeds::state(cell) {
-			State::Alive => WHITE,
-			State::Dead => BLACK,
+			State::Alive => Rgb::new(1.0, 1.0, 1.0),
+			State::Dead => Rgb::new(0.0, 0.0, 0.0),
 		}
 	}
 

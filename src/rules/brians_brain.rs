@@ -1,6 +1,6 @@
 use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
-use nannou::color::{encoding::Srgb, rgb::Rgb, *};
+use nannou::color::{encoding::Srgb, rgb::Rgb};
 use nannou::rand;
 use std::fmt::Write;
 
@@ -44,11 +44,11 @@ impl BriansBrain {
 		}
 	}
 
-	pub fn color(cell: Cell) -> Rgb<Srgb, u8> {
+	pub fn color(cell: Cell) -> Rgb<Srgb, f32> {
 		match BriansBrain::state(cell) {
-			State::Firing => FUCHSIA,
-			State::Refractory => CYAN,
-			State::Dead => BLACK,
+			State::Firing => Rgb::new(1.0, 0.0, 1.0),
+			State::Refractory => Rgb::new(0.0, 1.0, 1.0),
+			State::Dead => Rgb::new(0.0, 0.0, 0.0),
 		}
 	}
 

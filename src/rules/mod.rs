@@ -61,7 +61,7 @@ impl Ruleset {
 		}
 	}
 
-	pub fn color(&self, cell: Cell) -> Rgb<Srgb, u8> {
+	pub fn color(&self, cell: Cell) -> Rgb<Srgb, f32> {
 		match self {
 			Ruleset::Life => Life::color(cell),
 			Ruleset::AntiLife => AntiLife::color(cell),
