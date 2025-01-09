@@ -4,56 +4,41 @@ use nannou::color::{encoding::Srgb, rgb::Rgb};
 use nannou::rand;
 use std::fmt::Write;
 
-pub struct Seeds;
-impl Seeds {
+pub struct Diamoeba;
+impl Diamoeba {
 	pub fn alive() -> Cell {
 		Cell {
-			ruleset: Ruleset::Seeds,
+			ruleset: Ruleset::Diamoeba,
 			state: State::Alive as u8,
 		}
 	}
 
 	pub fn dead() -> Cell {
 		Cell {
-			ruleset: Ruleset::Seeds,
+			ruleset: Ruleset::Diamoeba,
 			state: State::Dead as u8,
 		}
 	}
 
 	pub fn random() -> Cell {
 		Cell {
-			ruleset: Ruleset::Seeds,
+			ruleset: Ruleset::Diamoeba,
 			state: rand::random_range(0, 2),
 		}
 	}
 
-	fn state(cell: Cell) -> State {
-		if cell.state >= State::Alive as u8 {
-			State::Alive
-		} else {
-			State::Dead
-		}
-	}
-
 	pub fn color(cell: Cell) -> Rgb<Srgb, f32> {
-		match Seeds::state(cell) {
-			State::Alive => Rgb::new(0.0, 1.0, 0.5),
-			State::Dead => Rgb::new(0.0, 0.0, 0.0),
+		match cell.state {
+			0b01 => Rgb::new(0.0, 1.0, 1.0),
+			0b11 => Rgb::new(0.0, 0.0, 1.0),
+			0b00 => Rgb::new(0.0, 0.0, 0.0),
+			0b10 => Rgb::new(0.0, 1.0, 0.0),
+			_ => Rgb::new(0.0, 0.0, 0.0),
 		}
 	}
 
 	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
-		let idx = row * BOARD_WIDTH + col;
-		if board[idx].state == State::Alive as u8 {
-			Seeds::dead()
-		} else {
-			let live_neighbors = count_live_neighbors(board, row, col);
-			if live_neighbors == 2 {
-				Seeds::alive()
-			} else {
-				Seeds::dead()
-			}
-		}
+		next_cell_state(board, row, col)
 	}
 
 	pub fn write_debug<W: Write>(output: &mut W, state: u8) -> std::fmt::Result {
@@ -104,4 +89,27 @@ fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
 	}
 
 	live_neighbors.count_ones()
+}
+
+fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
+	let live_neighbors = count_live_neighbors(board, row, col);
+	let idx = row * BOARD_WIDTH + col;
+
+	let is_alive = board[idx].state & 0b01 > 0;
+	let state = if is_alive {
+		match live_neighbors {
+			5 | 6 | 7 | 8 => State::Alive as u8 | 0b10,
+			_ => State::Dead as u8 | 0b10,
+		}
+	} else {
+		match live_neighbors {
+			3 | 5 | 6 | 7 | 8 => State::Alive as u8,
+			_ => State::Dead as u8,
+		}
+	};
+
+	Cell {
+		ruleset: Ruleset::Diamoeba,
+		state,
+	}
 }

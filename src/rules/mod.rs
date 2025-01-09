@@ -1,11 +1,15 @@
 mod anti_life;
 mod brians_brain;
+mod diamoeba;
+mod lattice_gas;
 mod life;
 mod seeds;
 
 use crate::world::Cell;
 pub use anti_life::AntiLife;
 pub use brians_brain::BriansBrain;
+pub use diamoeba::Diamoeba;
+pub use lattice_gas::LatticeGas;
 pub use life::Life;
 use nannou::color::{encoding::Srgb, rgb::Rgb};
 pub use seeds::Seeds;
@@ -18,6 +22,8 @@ pub enum Ruleset {
 	AntiLife,
 	BriansBrain,
 	Seeds,
+	Diamoeba,
+	LatticeGas,
 }
 
 const VARIANTS: &[Ruleset] = &[
@@ -25,6 +31,8 @@ const VARIANTS: &[Ruleset] = &[
 	Ruleset::AntiLife,
 	Ruleset::BriansBrain,
 	Ruleset::Seeds,
+	Ruleset::Diamoeba,
+	Ruleset::LatticeGas,
 ];
 
 impl Default for Ruleset {
@@ -40,6 +48,8 @@ impl Ruleset {
 			Ruleset::AntiLife => AntiLife::dead(),
 			Ruleset::BriansBrain => BriansBrain::firing(),
 			Ruleset::Seeds => Seeds::alive(),
+			Ruleset::Diamoeba => Diamoeba::alive(),
+			Ruleset::LatticeGas => LatticeGas::random_populated(),
 		}
 	}
 
@@ -49,6 +59,8 @@ impl Ruleset {
 			Ruleset::AntiLife => AntiLife::alive(),
 			Ruleset::BriansBrain => BriansBrain::dead(),
 			Ruleset::Seeds => Seeds::dead(),
+			Ruleset::Diamoeba => Diamoeba::dead(),
+			Ruleset::LatticeGas => LatticeGas::empty(),
 		}
 	}
 
@@ -58,6 +70,8 @@ impl Ruleset {
 			Ruleset::AntiLife => AntiLife::random(),
 			Ruleset::BriansBrain => BriansBrain::random(),
 			Ruleset::Seeds => Seeds::random(),
+			Ruleset::Diamoeba => Diamoeba::random(),
+			Ruleset::LatticeGas => LatticeGas::random(),
 		}
 	}
 
@@ -67,6 +81,8 @@ impl Ruleset {
 			Ruleset::AntiLife => AntiLife::color(cell),
 			Ruleset::BriansBrain => BriansBrain::color(cell),
 			Ruleset::Seeds => Seeds::color(cell),
+			Ruleset::Diamoeba => Diamoeba::color(cell),
+			Ruleset::LatticeGas => LatticeGas::color(cell),
 		}
 	}
 
@@ -76,6 +92,8 @@ impl Ruleset {
 			Ruleset::AntiLife => AntiLife::next_cell_state(board, row, col),
 			Ruleset::BriansBrain => BriansBrain::next_cell_state(board, row, col),
 			Ruleset::Seeds => Seeds::next_cell_state(board, row, col),
+			Ruleset::Diamoeba => Diamoeba::next_cell_state(board, row, col),
+			Ruleset::LatticeGas => LatticeGas::next_cell_state(board, row, col),
 		}
 	}
 
@@ -87,7 +105,10 @@ impl Ruleset {
 			Ruleset::AntiLife => AntiLife::write_debug(&mut output, cell.state),
 			Ruleset::BriansBrain => BriansBrain::write_debug(&mut output, cell.state),
 			Ruleset::Seeds => Seeds::write_debug(&mut output, cell.state),
-		}.unwrap();
+			Ruleset::Diamoeba => Diamoeba::write_debug(&mut output, cell.state),
+			Ruleset::LatticeGas => LatticeGas::write_debug(&mut output, cell.state),
+		}
+		.unwrap();
 		write!(&mut output, ")").unwrap();
 		output
 	}
