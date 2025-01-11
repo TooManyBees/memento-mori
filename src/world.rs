@@ -92,7 +92,14 @@ impl World {
 
 		for row in 0..BOARD_HEIGHT {
 			for col in 0..BOARD_WIDTH {
-				adjacent_live_rulesets(&mut all_live_neighboring_rulests, board, row, col, BOARD_WIDTH, BOARD_HEIGHT);
+				adjacent_live_rulesets(
+					&mut all_live_neighboring_rulests,
+					board,
+					row,
+					col,
+					BOARD_WIDTH,
+					BOARD_HEIGHT,
+				);
 				deduped_live_neighboring_rulesets.clear();
 				deduped_live_neighboring_rulesets.extend_from_slice(&all_live_neighboring_rulests);
 				deduped_live_neighboring_rulesets.dedup();
@@ -151,7 +158,14 @@ enum CurrentBoard {
 	B,
 }
 
-fn adjacent_live_rulesets(output: &mut Vec<Ruleset>, board: &[Cell], row: usize, col: usize, width: usize, height: usize) {
+fn adjacent_live_rulesets(
+	output: &mut Vec<Ruleset>,
+	board: &[Cell],
+	row: usize,
+	col: usize,
+	width: usize,
+	height: usize,
+) {
 	output.clear();
 
 	if row > 0 {
@@ -167,7 +181,13 @@ fn adjacent_live_rulesets(output: &mut Vec<Ruleset>, board: &[Cell], row: usize,
 	output.sort_unstable();
 }
 
-fn adjacent_live_rulesets_row(output: &mut Vec<Ruleset>, board: &[Cell], row: usize, col: usize, width: usize) {
+fn adjacent_live_rulesets_row(
+	output: &mut Vec<Ruleset>,
+	board: &[Cell],
+	row: usize,
+	col: usize,
+	width: usize,
+) {
 	let idx = row * width + col;
 
 	if col > 0 {
@@ -201,22 +221,29 @@ fn sort_rulesets_by_population(result: &mut Vec<(Ruleset, u8)>, rulesets: &[Rule
 
 #[cfg(test)]
 mod test {
-	use super::{Cell, Ruleset, adjacent_live_rulesets};
+	use super::{adjacent_live_rulesets, Cell, Ruleset};
 
 	#[test]
-	fn adjacent_live_rulesets_clusters_neighboring_rulesets() {
+	fn adjacent_live_rulesets_clusters_rulesets() {
 		let board = [
-			Ruleset::Life, Ruleset::Life, Ruleset::LatticeGas,
-			Ruleset::BriansBrain, Ruleset::Diamoeba, Ruleset::Seeds,
-			Ruleset::AntiLife, Ruleset::AntiLife, Ruleset::Seeds,
+			Ruleset::Life,
+			Ruleset::Life,
+			Ruleset::LatticeGas,
+			Ruleset::BriansBrain,
+			Ruleset::Diamoeba,
+			Ruleset::Seeds,
+			Ruleset::AntiLife,
+			Ruleset::AntiLife,
+			Ruleset::Seeds,
 		]
 		.into_iter()
-		.map(|ruleset| Cell { ruleset, state: 0b01 })
+		.map(|ruleset| Cell {
+			ruleset,
+			state: 0b01,
+		})
 		.collect::<Vec<_>>();
 
-		let mut result = Vec::with_capacity(9);
-		adjacent_live_rulesets(&mut result, &board, 1, 1, 3, 3);
-		assert_eq!(result, vec![
+		let expected = vec![
 			Ruleset::Life,
 			Ruleset::Life,
 			Ruleset::AntiLife,
@@ -226,7 +253,11 @@ mod test {
 			Ruleset::Seeds,
 			Ruleset::Diamoeba,
 			Ruleset::LatticeGas,
-		]);
+		];
+
+		let mut result = Vec::with_capacity(9);
+		adjacent_live_rulesets(&mut result, &board, 1, 1, 3, 3);
+		assert_eq!(result, expected);
 	}
 
 	// #[test]
