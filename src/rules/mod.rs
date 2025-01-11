@@ -16,7 +16,7 @@ pub use seeds::Seeds;
 use std::fmt::Write;
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub enum Ruleset {
 	Life,
 	AntiLife,
