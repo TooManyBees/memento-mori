@@ -210,15 +210,29 @@ fn view(app: &App, model: &Model, frame: Frame) {
 			let brush_idx = row * BOARD_WIDTH + col;
 			if brush_idx < BOARD_WIDTH * BOARD_HEIGHT {
 				let cell = board[brush_idx];
-				let text = cell.ruleset.write_debug(cell);
-				let text_width = (text.len() * 6) as f32;
 				let wr = wr.pad(20.0);
-				draw.rect()
-					.color(BLACK)
-					.x_y(wr.left() + text_width * 0.5, wr.bottom())
-					.w_h(text_width, 20.0);
-				draw.text(&text)
-					.x_y(wr.left() + text_width * 0.5, wr.bottom());
+
+				{
+					let text = cell.ruleset.write_debug(cell);
+					let text_width = (text.len() * 6) as f32;
+					draw.rect()
+						.color(BLACK)
+						.x_y(wr.left() + text_width * 0.5, wr.bottom())
+						.w_h(text_width, 20.0);
+					draw.text(&text)
+						.x_y(wr.left() + text_width * 0.5, wr.bottom());
+				}
+
+				{
+					let text = format!("Painting {:?}", model.brush.ruleset);
+					let text_width = (text.len() * 6) as f32;
+					draw.rect()
+						.color(BLACK)
+						.x_y(wr.right() - text_width * 0.5, wr.bottom())
+						.w_h(text_width, 20.0);
+					draw.text(&text)
+						.x_y(wr.right() - text_width * 0.5, wr.bottom());
+				}
 			}
 		}
 		draw.to_frame(app, &frame).unwrap();

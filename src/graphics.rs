@@ -133,11 +133,7 @@ pub fn render_graphics(frame: &Frame, graphics: &Graphics, board: &[Cell]) {
 		.iter()
 		.map(|cell| {
 			let color = cell.ruleset.color(*cell);
-			Color(
-				color.red,
-				color.green,
-				color.blue,
-			)
+			Color(color.red, color.green, color.blue)
 		})
 		.collect();
 	let colors_bytes = unsafe { wgpu::bytes::from_slice(&cell_colors) };
