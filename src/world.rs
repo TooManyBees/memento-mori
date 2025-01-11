@@ -68,6 +68,16 @@ impl World {
 		}
 	}
 
+	pub fn reset(&mut self) {
+		let blank_cell = Ruleset::default().off();
+		for cell in &mut self.state_a {
+			*cell = blank_cell;
+		}
+		for cell in &mut self.state_b {
+			*cell = blank_cell;
+		}
+	}
+
 	pub fn generate(&mut self) {
 		let (board, next_board) = self.this_board_and_next();
 		// next_board

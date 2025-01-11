@@ -53,6 +53,8 @@ fn model(app: &App) -> Model {
 		.build()
 		.unwrap();
 
+	app.set_exit_on_escape(false);
+
 	let graphics = make_graphics(app, BOARD_WIDTH, BOARD_HEIGHT);
 
 	Model {
@@ -88,6 +90,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::MouseReleased(MouseButton::Right) => println!("Mouse released: Right"),
 			WindowEvent::MousePressed(MouseButton::Middle) => println!("Mouse pressed: Middle"),
 			WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
+			WindowEvent::KeyPressed(Key::Escape) => model.world.reset(),
 			WindowEvent::KeyPressed(Key::C) => model.world.clear(),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
 			WindowEvent::KeyPressed(Key::Tab) => model.brush.ruleset = model.brush.ruleset.next(),
