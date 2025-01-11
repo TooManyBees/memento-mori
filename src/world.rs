@@ -180,7 +180,7 @@ fn adjacent_live_rulesets_row(output: &mut Vec<Ruleset>, board: &[Cell], row: us
 		output.push(board[idx].ruleset);
 	}
 
-	if col > width - 1 {
+	if col < width - 1 {
 		if board[idx + 1].state & 0b01 > 0 {
 			output.push(board[idx + 1].ruleset);
 		}
@@ -218,8 +218,11 @@ mod test {
 		adjacent_live_rulesets(&mut result, &board, 1, 1, 3, 3);
 		assert_eq!(result, vec![
 			Ruleset::Life,
+			Ruleset::Life,
+			Ruleset::AntiLife,
 			Ruleset::AntiLife,
 			Ruleset::BriansBrain,
+			Ruleset::Seeds,
 			Ruleset::Seeds,
 			Ruleset::Diamoeba,
 			Ruleset::LatticeGas,
