@@ -221,7 +221,7 @@ fn sort_rulesets_by_population(result: &mut Vec<(Ruleset, u8)>, rulesets: &[Rule
 
 #[cfg(test)]
 mod test {
-	use super::{adjacent_live_rulesets, Cell, Ruleset};
+	use super::{adjacent_live_rulesets, sort_rulesets_by_population, Cell, Ruleset};
 
 	#[test]
 	fn adjacent_live_rulesets_clusters_rulesets() {
@@ -288,5 +288,29 @@ mod test {
 		let mut result = Vec::with_capacity(9);
 		adjacent_live_rulesets(&mut result, &board, 1, 1, 3, 3);
 		assert_eq!(result, expected);
+	}
+
+	#[test]
+	fn sort_rulesets_by_population_sorts_em() {
+		let neighboring_rulesets = vec![
+			Ruleset::Life,
+			Ruleset::Life,
+			Ruleset::LatticeGas,
+			Ruleset::BriansBrain,
+			Ruleset::Diamoeba,
+			Ruleset::AntiLife,
+			Ruleset::AntiLife,
+			Ruleset::AntiLife,
+			Ruleset::Seeds,
+		];
+
+		let mut result: Vec<(Ruleset, u8)> = Vec::with_capacity(9);
+
+		sort_rulesets_by_population(&mut result, &neighboring_rulesets);
+
+		// Because of an unstable sort, all the rulesets with count=1 will
+		// have an undefined order, and also we don't care what it is
+		assert_eq!(result[0], (Ruleset::AntiLife, 3));
+		assert_eq!(result[1], (Ruleset::Life, 2));
 	}
 }
