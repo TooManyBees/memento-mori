@@ -300,14 +300,33 @@ mod test {
 		assert_eq!(result, expected);
 	}
 
-	// #[test]
-	// fn adjacent_live_rulesets_ignores_dead_cells() {
-	// 	let board = vec![
+	#[test]
+	fn adjacent_live_rulesets_ignores_dead_cells() {
+		let board = [
+			(Ruleset::Life, 0b01),
+			(Ruleset::Life, 0b00),
+			(Ruleset::LatticeGas, 0b01),
+			(Ruleset::BriansBrain, 0b11),
+			(Ruleset::Diamoeba, 0b10),
+			(Ruleset::Seeds, 0b01),
+			(Ruleset::AntiLife, 0b10),
+			(Ruleset::AntiLife, 0b00),
+			(Ruleset::Seeds, 0b01),
+		]
+		.into_iter()
+		.map(|(ruleset, state)| Cell { ruleset, state })
+		.collect::<Vec<_>>();
 
-	// 	];
+		let expected = vec![
+			Ruleset::Life,
+			Ruleset::BriansBrain,
+			Ruleset::Seeds,
+			Ruleset::Seeds,
+			Ruleset::LatticeGas,
+		];
 
-	// 	let mut result = Vec::with_capacity(9);
-	// 	adjacent_live_rulesets(result, &board);
-	// 	assert_eq!(result, vec![]);
-	// }
+		let mut result = Vec::with_capacity(9);
+		adjacent_live_rulesets(&mut result, &board, 1, 1, 3, 3);
+		assert_eq!(result, expected);
+	}
 }
