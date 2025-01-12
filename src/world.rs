@@ -71,7 +71,7 @@ impl World {
 		}
 	}
 
-	pub fn generate(&mut self) {
+	pub fn generate(&mut self, growth: bool) {
 		let (board, next_board) = self.this_board_and_next();
 		// next_board
 		// 	.par_chunks_exact_mut(BOARD_WIDTH)
@@ -92,21 +92,24 @@ impl World {
 
 		for row in 0..BOARD_HEIGHT {
 			for col in 0..BOARD_WIDTH {
-				adjacent_live_rulesets(
-					&mut all_live_neighboring_rulests,
-					board,
-					row,
-					col,
-					BOARD_WIDTH,
-					BOARD_HEIGHT,
-				);
-				deduped_live_neighboring_rulesets.clear();
-				deduped_live_neighboring_rulesets.extend_from_slice(&all_live_neighboring_rulests);
-				deduped_live_neighboring_rulesets.dedup();
+				if growth {
+					adjacent_live_rulesets(
+						&mut all_live_neighboring_rulests,
+						board,
+						row,
+						col,
+						BOARD_WIDTH,
+						BOARD_HEIGHT,
+					);
+					deduped_live_neighboring_rulesets.clear();
+					deduped_live_neighboring_rulesets
+						.extend_from_slice(&all_live_neighboring_rulests);
+					deduped_live_neighboring_rulesets.dedup();
+				}
 
 				let idx = row * BOARD_WIDTH + col;
 
-				let next_cell = if deduped_live_neighboring_rulesets.len() > 1 {
+				let next_cell = if growth && deduped_live_neighboring_rulesets.len() > 1 {
 					possible_next_cells.clear();
 
 					for &ruleset in &deduped_live_neighboring_rulesets {
