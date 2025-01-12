@@ -187,6 +187,10 @@ fn adjacent_live_rulesets(
 
 #[inline]
 fn push_ruleset_if_live(output: &mut Vec<Ruleset>, board: &[Cell], idx: usize) {
+	// Consider pushing ruleset if cell's state is nonzero, not only if cell's
+	// smallest bit is on. This will make the growth algorithm consider the
+	// rulesets of cells which aren't alive but have history in its upper bits,
+	// like "refractory" in brian's brian, or "was alive" in anti-life.
 	if board[idx].state & 0b01 > 0 {
 		output.push(board[idx].ruleset);
 	}
