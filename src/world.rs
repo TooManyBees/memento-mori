@@ -9,10 +9,78 @@ pub struct Cell {
 	pub state: u8,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
+struct Growth {
+	all_live_neighboring_rulests: Vec<Ruleset>,
+	deduped_live_neighboring_rulesets: Vec<Ruleset>,
+	possible_next_cells: Vec<Cell>,
+	live_rulesets_by_population: Vec<(Ruleset, u8)>,
+}
+
+impl Default for Growth {
+	fn default() -> Self {
+		Growth {
+			all_live_neighboring_rulests: Vec::with_capacity(9),
+			deduped_live_neighboring_rulesets: Vec::with_capacity(9),
+			possible_next_cells: Vec::with_capacity(9),
+			live_rulesets_by_population: Vec::with_capacity(9),
+		}
+	}
+}
+
+impl Growth {
+	fn find_neighboring_rulesets(&mut self, board: &[Cell], row: usize, col: usize) {
+		adjacent_live_rulesets(
+			&mut self.all_live_neighboring_rulests,
+			board,
+			row,
+			col,
+			BOARD_WIDTH,
+			BOARD_HEIGHT,
+		);
+		self.deduped_live_neighboring_rulesets.clear();
+		self.deduped_live_neighboring_rulesets
+			.extend_from_slice(&self.all_live_neighboring_rulests);
+		self.deduped_live_neighboring_rulesets.dedup();
+
+		if self.has_competing_rulesets() {
+			sort_rulesets_by_population(
+				&mut self.live_rulesets_by_population,
+				&self.all_live_neighboring_rulests,
+			);
+
+			self.possible_next_cells.clear();
+
+			for ruleset in &self.deduped_live_neighboring_rulesets {
+				let possible_next = ruleset.next_cell_state(board, row, col);
+				if possible_next.state & 0b01 > 0 {
+					self.possible_next_cells.push(possible_next);
+				}
+			}
+		}
+	}
+
+	fn has_competing_rulesets(&self) -> bool {
+		self.deduped_live_neighboring_rulesets.len() > 0
+	}
+
+	fn next_live_state(&self) -> Option<Cell> {
+		self.live_rulesets_by_population
+			.iter()
+			.find_map(|(ruleset, _)| {
+				self.possible_next_cells
+					.iter()
+					.find(|next_cell| next_cell.ruleset == *ruleset)
+			})
+			.copied()
+	}
+}
+
+#[derive(Debug)]
 pub struct World {
 	state_a: Vec<Cell>,
 	state_b: Vec<Cell>,
+	growth: Growth,
 	current_board: CurrentBoard,
 }
 
@@ -24,6 +92,7 @@ impl World {
 		World {
 			state_a,
 			state_b,
+			growth: Default::default(),
 			current_board: CurrentBoard::A,
 		}
 	}
@@ -49,6 +118,13 @@ impl World {
 		}
 	}
 
+	fn boards_and_growth(&mut self) -> (&mut [Cell], &mut [Cell], &mut Growth) {
+		match self.current_board {
+			CurrentBoard::A => (&mut self.state_a, &mut self.state_b, &mut self.growth),
+			CurrentBoard::B => (&mut self.state_b, &mut self.state_a, &mut self.growth),
+		}
+	}
+
 	pub fn randomize(&mut self) {
 		for cell in self.board_mut() {
 			*cell = cell.ruleset.random();
@@ -71,8 +147,8 @@ impl World {
 		}
 	}
 
-	pub fn generate(&mut self, growth: bool) {
-		let (board, next_board) = self.this_board_and_next();
+	pub fn generate(&mut self, growth_enabled: bool) {
+		let (board, next_board, growth) = self.boards_and_growth();
 		// next_board
 		// 	.par_chunks_exact_mut(BOARD_WIDTH)
 		// 	.enumerate()
@@ -85,53 +161,17 @@ impl World {
 		// 		}
 		// 	});
 
-		let mut all_live_neighboring_rulests = Vec::with_capacity(9);
-		let mut deduped_live_neighboring_rulesets = Vec::with_capacity(9);
-		let mut possible_next_cells = Vec::with_capacity(9);
-		let mut live_rulesets_by_population = Vec::with_capacity(9); // FIXME we don't need 9
-
 		for row in 0..BOARD_HEIGHT {
 			for col in 0..BOARD_WIDTH {
-				if growth {
-					adjacent_live_rulesets(
-						&mut all_live_neighboring_rulests,
-						board,
-						row,
-						col,
-						BOARD_WIDTH,
-						BOARD_HEIGHT,
-					);
-					deduped_live_neighboring_rulesets.clear();
-					deduped_live_neighboring_rulesets
-						.extend_from_slice(&all_live_neighboring_rulests);
-					deduped_live_neighboring_rulesets.dedup();
+				if growth_enabled {
+					growth.find_neighboring_rulesets(board, row, col);
 				}
 
 				let idx = row * BOARD_WIDTH + col;
 
-				let next_cell = if growth && deduped_live_neighboring_rulesets.len() > 1 {
-					possible_next_cells.clear();
-
-					for &ruleset in &deduped_live_neighboring_rulesets {
-						let possible_next = ruleset.next_cell_state(board, row, col);
-						if possible_next.state & 0b01 > 0 {
-							possible_next_cells.push(possible_next);
-						}
-					}
-
-					sort_rulesets_by_population(
-						&mut live_rulesets_by_population,
-						&all_live_neighboring_rulests,
-					);
-
-					let next_state = live_rulesets_by_population
-						.iter()
-						.find_map(|(ruleset, _)| {
-							possible_next_cells
-								.iter()
-								.find(|next_cell| next_cell.ruleset == *ruleset)
-						})
-						.copied()
+				let next_cell = if growth_enabled && growth.has_competing_rulesets() {
+					let next_state = growth
+						.next_live_state()
 						.unwrap_or_else(|| board[idx].ruleset.next_cell_state(board, row, col));
 
 					if next_state.ruleset != board[idx].ruleset {
