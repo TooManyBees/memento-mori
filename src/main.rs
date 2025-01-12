@@ -196,7 +196,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 fn view(app: &App, model: &Model, frame: Frame) {
 	let board = model.world.board();
 
-	render_graphics(&frame, &model.graphics, board);
+	render_graphics(&frame, &model.graphics, board, app.keys.mods.shift());
 
 	if model.draw_brush {
 		let draw = app.draw();

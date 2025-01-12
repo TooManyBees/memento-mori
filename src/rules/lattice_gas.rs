@@ -1,6 +1,6 @@
 use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
-use nannou::color::{encoding::Srgb, rgb::Rgb};
+use nannou::color::LinSrgba;
 use nannou::rand;
 use std::fmt::Write;
 
@@ -41,11 +41,11 @@ impl LatticeGas {
 		next_cell_state(board, row, col)
 	}
 
-	pub fn color(cell: Cell) -> Rgb<Srgb, f32> {
+	pub fn color(cell: Cell) -> LinSrgba {
 		if cell.state & POPULATED > 0 {
-			Rgb::new(0.0, 0.0, 0.0)
+			LinSrgba::new(0.0, 0.0, 0.0, 1.0)
 		} else {
-			Rgb::new(1.0, 1.0, 1.0)
+			LinSrgba::new(1.0, 1.0, 1.0, 1.0)
 		}
 	}
 

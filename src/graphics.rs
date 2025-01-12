@@ -1,4 +1,5 @@
 use crate::world::Cell;
+use nannou::color::Blend;
 use nannou::prelude::*;
 use nannou::wgpu;
 
@@ -128,11 +129,15 @@ pub fn make_graphics(app: &App, width: usize, height: usize) -> Graphics {
 	}
 }
 
-pub fn render_graphics(frame: &Frame, graphics: &Graphics, board: &[Cell]) {
+pub fn render_graphics(frame: &Frame, graphics: &Graphics, board: &[Cell], blend_overlay: bool) {
 	let cell_colors: Vec<_> = board
 		.iter()
 		.map(|cell| {
-			let color = cell.ruleset.color(*cell);
+			let color = if blend_overlay {
+				cell.ruleset.rule_color().over(cell.ruleset.color(*cell))
+			} else {
+				cell.ruleset.color(*cell)
+			};
 			Color(color.red, color.green, color.blue)
 		})
 		.collect();

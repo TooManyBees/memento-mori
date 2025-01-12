@@ -1,6 +1,6 @@
 use crate::rules::Ruleset;
 use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
-use nannou::color::{encoding::Srgb, rgb::Rgb};
+use nannou::color::LinSrgba;
 use nannou::rand;
 use std::fmt::Write;
 
@@ -27,13 +27,13 @@ impl AntiLife {
 		}
 	}
 
-	pub fn color(cell: Cell) -> Rgb<Srgb, f32> {
+	pub fn color(cell: Cell) -> LinSrgba {
 		match cell.state {
-			0b11 => Rgb::new(1.0, 1.0, 1.0),
-			0b10 => Rgb::new(0.0, 0.0, 1.0),
-			0b01 => Rgb::new(0.0, 1.0, 0.0),
-			0b00 => Rgb::new(1.0, 0.0, 0.0),
-			_ => Rgb::new(0.0, 0.0, 0.0), // Black == undefined
+			0b11 => LinSrgba::new(1.0, 1.0, 1.0, 1.0),
+			0b10 => LinSrgba::new(0.0, 0.0, 1.0, 1.0),
+			0b01 => LinSrgba::new(0.0, 1.0, 0.0, 1.0),
+			0b00 => LinSrgba::new(1.0, 0.0, 0.0, 1.0),
+			_ => LinSrgba::new(0.0, 0.0, 0.0, 1.0), // Black == undefined
 		}
 	}
 

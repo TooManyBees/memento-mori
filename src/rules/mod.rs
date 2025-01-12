@@ -11,7 +11,7 @@ pub use brians_brain::BriansBrain;
 pub use diamoeba::Diamoeba;
 pub use lattice_gas::LatticeGas;
 pub use life::Life;
-use nannou::color::{encoding::Srgb, rgb::Rgb};
+use nannou::color::LinSrgba;
 pub use seeds::Seeds;
 use std::fmt::Write;
 
@@ -75,7 +75,7 @@ impl Ruleset {
 		}
 	}
 
-	pub fn color(&self, cell: Cell) -> Rgb<Srgb, f32> {
+	pub fn color(&self, cell: Cell) -> LinSrgba {
 		match self {
 			Ruleset::Life => Life::color(cell),
 			Ruleset::AntiLife => AntiLife::color(cell),
@@ -83,6 +83,17 @@ impl Ruleset {
 			Ruleset::Seeds => Seeds::color(cell),
 			Ruleset::Diamoeba => Diamoeba::color(cell),
 			Ruleset::LatticeGas => LatticeGas::color(cell),
+		}
+	}
+
+	pub fn rule_color(&self) -> LinSrgba {
+		match self {
+			Ruleset::Life => LinSrgba::new(1.0, 0.0, 0.0, 0.5),
+			Ruleset::AntiLife => LinSrgba::new(0.0, 1.0, 0.0, 0.5),
+			Ruleset::BriansBrain => LinSrgba::new(0.0, 1.0, 1.0, 0.5),
+			Ruleset::Seeds => LinSrgba::new(0.0, 1.0, 0.5, 0.5),
+			Ruleset::Diamoeba => LinSrgba::new(0.0, 0.0, 1.0, 0.5),
+			Ruleset::LatticeGas => LinSrgba::new(1.0, 1.0, 1.0, 0.5),
 		}
 	}
 
