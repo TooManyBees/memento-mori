@@ -1,9 +1,10 @@
 mod graphics;
+mod model;
 mod rules;
 mod world;
 
-use crate::graphics::{make_graphics, render_graphics, Graphics};
-use crate::rules::Ruleset;
+use crate::graphics::{make_graphics, render_graphics};
+use crate::model::{AnimationState, Brush, ColRow, Model};
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 use std::time::{Duration, Instant};
@@ -18,69 +19,6 @@ fn main() {
 		.update(update)
 		.view(view)
 		.run();
-}
-
-#[derive(Default)]
-struct ColRow {
-	col: usize,
-	row: usize,
-}
-
-#[derive(Default)]
-struct Brush {
-	size: u32,
-	pos: Vec2,
-	ruleset: Ruleset,
-	col_row: ColRow,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-enum AnimationState {
-	Running,
-	Paused,
-	AdvanceFrame,
-}
-
-impl AnimationState {
-	fn toggle(self) -> Self {
-		match self {
-			AnimationState::Running => AnimationState::Paused,
-			_ => AnimationState::Running,
-		}
-	}
-
-	fn frame_step(self) -> Self {
-		match self {
-			AnimationState::Running => AnimationState::Paused,
-			_ => AnimationState::AdvanceFrame,
-		}
-	}
-
-	fn next(self) -> Self {
-		match self {
-			AnimationState::Running => AnimationState::Running,
-			_ => AnimationState::Paused,
-		}
-	}
-}
-
-struct Model {
-	world: World,
-	brush: Brush,
-	draw_brush: bool,
-	graphics: Graphics,
-	animation_state: AnimationState,
-	last_generation_at: Instant,
-}
-
-impl Model {
-	fn is_running(&self) -> bool {
-		match self.animation_state {
-			AnimationState::Running => true,
-			AnimationState::AdvanceFrame => true,
-			AnimationState::Paused => false,
-		}
-	}
 }
 
 fn model(app: &App) -> Model {
