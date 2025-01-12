@@ -74,6 +74,7 @@ pub struct Model {
 	pub world: World,
 	pub brush: Brush,
 	pub draw_brush: bool,
+	pub growth: bool,
 	pub graphics: Graphics,
 	pub animation_state: AnimationState,
 	pub last_generation_at: Instant,

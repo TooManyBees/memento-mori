@@ -55,6 +55,7 @@ fn model(app: &App) -> Model {
 			..Default::default()
 		},
 		draw_brush: false,
+		growth: false,
 		graphics,
 		animation_state: AnimationState::Running,
 		last_generation_at: Instant::now() - GENERATION_RATE,
@@ -88,6 +89,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			// WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
 			WindowEvent::KeyPressed(Key::Escape) => model.world.reset(),
 			WindowEvent::KeyPressed(Key::C) => model.world.clear(),
+			WindowEvent::KeyPressed(Key::G) => model.growth = !model.growth,
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
 			WindowEvent::KeyPressed(Key::U) => {
 				model.draw_user_state = model.draw_user_state.toggle()
@@ -223,7 +225,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	}
 
 	if advance_simulation {
-		model.world.generate();
+		model.world.generate(model.growth);
 		model.world.swap();
 		model.last_generation_at = Instant::now();
 		model.animation_state = model.animation_state.next();
@@ -315,7 +317,9 @@ fn view(app: &App, model: &Model, frame: Frame) {
 				}
 
 				{
-					let text = format!("Painting {:?}", model.brush.ruleset);
+					let growth_text = if model.growth { "on" } else { "off" };
+					let text =
+						format!("Growth {}; Painting {:?}", growth_text, model.brush.ruleset);
 					let text_width = (text.len() * 6) as f32;
 					draw.rect()
 						.color(BLACK)
