@@ -190,7 +190,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		if let Err(e) = oni_manager.update() {
 			println!("Error updating: {e:?}");
 		} else {
-			if !oni_manager.users.is_empty() {
+			if oni_manager.is_anyone_here() {
 				let (board, next_board) = model.world.this_board_and_next();
 				for row in 0..BOARD_HEIGHT {
 					for col in 0..BOARD_WIDTH {

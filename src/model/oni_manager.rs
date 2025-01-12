@@ -6,7 +6,7 @@ use openni2::{Device, SensorType};
 pub struct OniManager {
 	user_tracker: &'static mut UserTrackerManager<'static>,
 	pub user_map: &'static mut [NiteUserId],
-	pub users: Vec<NiteUserId>,
+	users_present: bool,
 	user_map_width: usize,
 	user_map_height: usize,
 }
@@ -24,13 +24,13 @@ impl OniManager {
 			return Ok(());
 		}
 
-		self.users = user_frame
-			.users()
-			.into_iter()
-			.map(|user_data| user_data.id())
-			.collect();
+		self.users_present = !user_frame.users().is_empty();
 		self.user_map.copy_from_slice(user_map.pixels);
 		Ok(())
+	}
+
+	pub fn is_anyone_here(&self) -> bool {
+		self.users_present
 	}
 
 	pub fn index_at(&self, pct_x: f32, pct_y: f32) -> usize {
@@ -54,7 +54,7 @@ impl OniManager {
 		Ok(OniManager {
 			user_tracker: Box::leak(Box::new(user_tracker)),
 			user_map: vec![0; user_map_width * user_map_height].leak(),
-			users: vec![],
+			users_present: false,
 			user_map_width,
 			user_map_height,
 		})
