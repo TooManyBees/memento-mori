@@ -28,7 +28,7 @@ struct ColRow {
 
 #[derive(Default)]
 struct Brush {
-	size: f32,
+	size: u32,
 	pos: Vec2,
 	ruleset: Ruleset,
 	col_row: ColRow,
@@ -100,7 +100,7 @@ fn model(app: &App) -> Model {
 	Model {
 		world: World::new(),
 		brush: Brush {
-			size: 8.0,
+			size: 3,
 			..Default::default()
 		},
 		draw_brush: false,
@@ -141,7 +141,15 @@ fn event(app: &App, model: &mut Model, event: Event) {
 				model.animation_state = model.animation_state.toggle()
 			}
 			WindowEvent::MouseWheel(MouseScrollDelta::LineDelta(_, delta), _) => {
-				model.brush.size = (model.brush.size + delta).max(1.0).min(16.0)
+				model.brush.size = {
+					let size = (model.brush.size as i32 + delta as i32).max(0).min(10) as u32;
+					if 2usize.pow(size) > (BOARD_WIDTH / 2) || 2usize.pow(size) > (BOARD_HEIGHT / 2)
+					{
+						model.brush.size
+					} else {
+						size
+					}
+				}
 			}
 			_ => {}
 		},
@@ -176,26 +184,28 @@ fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
 	let brush_row = (brush_px_y / CELL_SIZE as f32).floor().max(0.0) as usize;
 	let brush_col = (brush_px_x / CELL_SIZE as f32).floor().max(0.0) as usize;
 
-	let min_row = if brush_row > model.brush.size as usize {
-		brush_row - model.brush.size as usize
-	} else {
-		0
-	};
-	let max_row = (brush_row + model.brush.size as usize).min(BOARD_HEIGHT - 1);
+	let brush_size = 2usize.pow(model.brush.size);
 
-	let min_col = if brush_col > model.brush.size as usize {
-		brush_col - model.brush.size as usize
+	let min_row = if brush_row > brush_size {
+		brush_row - brush_size
 	} else {
 		0
 	};
-	let max_col = (brush_col + model.brush.size as usize).min(BOARD_WIDTH - 1);
+	let max_row = (brush_row + brush_size).min(BOARD_HEIGHT - 1);
+
+	let min_col = if brush_col > brush_size {
+		brush_col - brush_size
+	} else {
+		0
+	};
+	let max_col = (brush_col + brush_size).min(BOARD_WIDTH - 1);
 
 	for check_row in min_row..=max_row {
 		let check_px_y = (check_row as f32 + 0.5) * CELL_SIZE as f32;
 		for check_col in min_col..=max_col {
 			let check_px_x = (check_col as f32 + 0.5) * CELL_SIZE as f32;
 			let inside = (check_px_x - brush_px_x).pow(2) + (check_px_y - brush_px_y).pow(2)
-				< (model.brush.size * CELL_SIZE as f32).pow(2);
+				< (brush_size as f32 * CELL_SIZE as f32 - CELL_SIZE as f32 * 0.25).pow(2);
 			if inside {
 				let idx = check_row * BOARD_WIDTH + check_col;
 				f(&mut model.world, &model.brush, idx);
@@ -244,8 +254,9 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
 	if model.draw_brush {
 		let draw = app.draw();
+		let brush_radius = (2usize.pow(model.brush.size as u32) * CELL_SIZE) as f32;
 		draw.ellipse()
-			.radius(model.brush.size * CELL_SIZE as f32)
+			.radius(brush_radius)
 			.xy(model.brush.pos)
 			.stroke_weight(2.0)
 			.stroke(RED)
