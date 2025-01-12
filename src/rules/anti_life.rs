@@ -57,19 +57,23 @@ fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_cent
 	let idx = row * BOARD_WIDTH + col;
 
 	let mut live = if exclude_center {
-		0
+		1
 	} else {
 		board[idx].state & 0b01
 	};
 
+	live <<= 1;
 	if col > 0 {
-		live <<= 1;
 		live |= board[idx - 1].state & 0b01;
+	} else {
+		live |= 0b01;
 	}
 
+	live <<= 1;
 	if (col + 1) < BOARD_WIDTH {
-		live <<= 1;
 		live |= board[idx + 1].state & 0b01;
+	} else {
+		live |= 0b01;
 	}
 
 	live
@@ -78,14 +82,18 @@ fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_cent
 fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
 	let mut live_neighbors = count_live_row_neighbors(board, row, col, true);
 
+	live_neighbors <<= 3;
 	if row > 0 {
-		live_neighbors <<= 3;
 		live_neighbors |= count_live_row_neighbors(board, row - 1, col, false);
+	} else {
+		live_neighbors |= 0b111;
 	}
 
+	live_neighbors <<= 3;
 	if row + 1 < BOARD_HEIGHT {
-		live_neighbors <<= 3;
 		live_neighbors |= count_live_row_neighbors(board, row + 1, col, false);
+	} else {
+		live_neighbors |= 0b111;
 	}
 
 	live_neighbors.count_ones()
