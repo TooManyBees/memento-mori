@@ -88,12 +88,12 @@ impl Ruleset {
 
 	pub fn rule_color(&self) -> LinSrgba {
 		match self {
-			Ruleset::Life => LinSrgba::new(1.0, 0.0, 0.0, 0.5),
-			Ruleset::AntiLife => LinSrgba::new(0.0, 1.0, 0.0, 0.5),
-			Ruleset::BriansBrain => LinSrgba::new(0.0, 1.0, 1.0, 0.5),
-			Ruleset::Seeds => LinSrgba::new(0.0, 1.0, 0.5, 0.5),
-			Ruleset::Diamoeba => LinSrgba::new(0.0, 0.0, 1.0, 0.5),
-			Ruleset::LatticeGas => LinSrgba::new(1.0, 1.0, 1.0, 0.5),
+			Ruleset::Life => LinSrgba::new(1.0, 0.0, 0.0, 0.125),
+			Ruleset::AntiLife => LinSrgba::new(0.0, 1.0, 0.0, 0.125),
+			Ruleset::BriansBrain => LinSrgba::new(0.0, 1.0, 1.0, 0.125),
+			Ruleset::Seeds => LinSrgba::new(0.0, 1.0, 0.5, 0.125),
+			Ruleset::Diamoeba => LinSrgba::new(0.0, 0.0, 1.0, 0.125),
+			Ruleset::LatticeGas => LinSrgba::new(1.0, 1.0, 1.0, 0.125),
 		}
 	}
 

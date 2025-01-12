@@ -134,7 +134,7 @@ pub fn render_graphics(frame: &Frame, graphics: &Graphics, board: &[Cell], blend
 		.iter()
 		.map(|cell| {
 			let color = if blend_overlay {
-				cell.ruleset.rule_color().over(cell.ruleset.color(*cell))
+				cell.ruleset.rule_color().lighten(cell.ruleset.color(*cell))
 			} else {
 				cell.ruleset.color(*cell)
 			};
