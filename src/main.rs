@@ -4,7 +4,8 @@ mod rules;
 mod world;
 
 use crate::graphics::{make_graphics, render_graphics};
-use crate::model::{AnimationState, Brush, ColRow, Model};
+use crate::model::{AnimationState, Brush, ColRow, Model, OniManager};
+use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 use std::time::{Duration, Instant};
@@ -35,16 +36,23 @@ fn model(app: &App) -> Model {
 
 	let graphics = make_graphics(app, BOARD_WIDTH, BOARD_HEIGHT);
 
+	let oni_manager = OniManager::create();
+	if let Err(ref e) = oni_manager {
+		println!("{e:?}");
+	}
+
 	Model {
 		world: World::new(),
 		brush: Brush {
 			size: 3,
+			ruleset: Ruleset::default().next(),
 			..Default::default()
 		},
 		draw_brush: false,
 		graphics,
 		animation_state: AnimationState::Running,
 		last_generation_at: Instant::now() - GENERATION_RATE,
+		oni_manager: oni_manager.ok(),
 	}
 }
 
@@ -176,6 +184,30 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		model.world.swap();
 		model.last_generation_at = Instant::now();
 		model.animation_state = model.animation_state.next();
+	}
+
+	if let Some(oni_manager) = &mut model.oni_manager {
+		if let Err(e) = oni_manager.update() {
+			println!("Error updating: {e:?}");
+		} else {
+			if !oni_manager.users.is_empty() {
+				let (board, next_board) = model.world.this_board_and_next();
+				for row in 0..BOARD_HEIGHT {
+					for col in 0..BOARD_WIDTH {
+						let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
+						let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
+
+						let board_idx = row * BOARD_WIDTH + col;
+						let map_idx = oni_manager.index_at(pct_x, pct_y);
+
+						if oni_manager.user_map[map_idx] > 0 {
+							board[board_idx].ruleset = model.brush.ruleset;
+							next_board[board_idx].ruleset = model.brush.ruleset;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	if app.mouse.buttons.left().is_down() {

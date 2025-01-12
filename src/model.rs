@@ -1,7 +1,10 @@
+mod oni_manager;
+
 use crate::graphics::Graphics;
 use crate::rules::Ruleset;
 use crate::world::World;
 use nannou::prelude::*;
+pub use oni_manager::OniManager;
 use std::time::Instant;
 
 #[derive(Default)]
@@ -55,6 +58,7 @@ pub struct Model {
 	pub graphics: Graphics,
 	pub animation_state: AnimationState,
 	pub last_generation_at: Instant,
+	pub oni_manager: Option<OniManager>,
 }
 
 impl Model {
