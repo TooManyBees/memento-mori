@@ -34,13 +34,54 @@ struct Brush {
 	col_row: ColRow,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+enum AnimationState {
+	Running,
+	Paused,
+	AdvanceFrame,
+}
+
+impl AnimationState {
+	fn toggle(self) -> Self {
+		match self {
+			AnimationState::Running => AnimationState::Paused,
+			_ => AnimationState::Running,
+		}
+	}
+
+	fn frame_step(self) -> Self {
+		match self {
+			AnimationState::Running => AnimationState::Paused,
+			_ => AnimationState::AdvanceFrame,
+		}
+	}
+
+	fn next(self) -> Self {
+		match self {
+			AnimationState::Running => AnimationState::Running,
+			_ => AnimationState::Paused,
+		}
+	}
+}
+
 struct Model {
 	world: World,
 	brush: Brush,
 	draw_brush: bool,
 	drawing: bool,
 	graphics: Graphics,
+	animation_state: AnimationState,
 	last_generation_at: Instant,
+}
+
+impl Model {
+	fn is_running(&self) -> bool {
+		match self.animation_state {
+			AnimationState::Running => true,
+			AnimationState::AdvanceFrame => true,
+			AnimationState::Paused => false,
+		}
+	}
 }
 
 fn model(app: &App) -> Model {
@@ -66,6 +107,7 @@ fn model(app: &App) -> Model {
 		draw_brush: false,
 		drawing: false,
 		graphics,
+		animation_state: AnimationState::Running,
 		last_generation_at: Instant::now() - GENERATION_RATE,
 	}
 }
@@ -94,6 +136,12 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::KeyPressed(Key::C) => model.world.clear(),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
 			WindowEvent::KeyPressed(Key::Tab) => model.brush.ruleset = model.brush.ruleset.next(),
+			WindowEvent::KeyPressed(Key::Space) => {
+				model.animation_state = model.animation_state.frame_step()
+			}
+			WindowEvent::KeyPressed(Key::Return) => {
+				model.animation_state = model.animation_state.toggle()
+			}
 			WindowEvent::MouseWheel(MouseScrollDelta::LineDelta(_, delta), _) => {
 				model.brush.size = (model.brush.size + delta).max(1.0).min(16.0)
 			}
@@ -159,7 +207,8 @@ fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
 }
 
 fn update(app: &App, model: &mut Model, _update: Update) {
-	let advance_simulation = model.last_generation_at.elapsed() >= GENERATION_RATE;
+	let advance_simulation =
+		model.is_running() && model.last_generation_at.elapsed() >= GENERATION_RATE;
 
 	if model.drawing {
 		fn paint_liveness(world: &mut World, brush: &Brush, idx: usize) {
@@ -187,6 +236,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		model.world.generate();
 		model.world.swap();
 		model.last_generation_at = Instant::now();
+		model.animation_state = model.animation_state.next();
 	}
 }
 
