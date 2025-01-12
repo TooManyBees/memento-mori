@@ -233,17 +233,17 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		next_board[idx].ruleset = brush.ruleset;
 	}
 
-	if app.mouse.buttons.left().is_down() {
-		paint(model, paint_liveness);
-	} else if app.mouse.buttons.right().is_down() {
-		paint(model, paint_ruleset);
-	}
-
 	if advance_simulation {
 		model.world.generate();
 		model.world.swap();
 		model.last_generation_at = Instant::now();
 		model.animation_state = model.animation_state.next();
+	}
+
+	if app.mouse.buttons.left().is_down() {
+		paint(model, paint_liveness);
+	} else if app.mouse.buttons.right().is_down() {
+		paint(model, paint_ruleset);
 	}
 }
 
