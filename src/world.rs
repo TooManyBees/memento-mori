@@ -225,6 +225,13 @@ fn adjacent_live_rulesets(
 	output.sort_unstable();
 }
 
+#[inline]
+fn push_ruleset_if_live(output: &mut Vec<Ruleset>, board: &[Cell], idx: usize) {
+	if board[idx].state & 0b01 > 0 {
+		output.push(board[idx].ruleset);
+	}
+}
+
 fn adjacent_live_rulesets_row(
 	output: &mut Vec<Ruleset>,
 	board: &[Cell],
@@ -235,19 +242,13 @@ fn adjacent_live_rulesets_row(
 	let idx = row * width + col;
 
 	if col > 0 {
-		if board[idx - 1].state & 0b01 > 0 {
-			output.push(board[idx - 1].ruleset);
-		}
+		push_ruleset_if_live(output, board, idx - 1);
 	}
 
-	if board[idx].state & 0b01 > 0 {
-		output.push(board[idx].ruleset);
-	}
+	push_ruleset_if_live(output, board, idx);
 
 	if col < width - 1 {
-		if board[idx + 1].state & 0b01 > 0 {
-			output.push(board[idx + 1].ruleset);
-		}
+		push_ruleset_if_live(output, board, idx + 1);
 	}
 }
 
