@@ -182,7 +182,8 @@ impl World {
 				} else {
 					board[idx].ruleset.next_cell_state(scratch_board.as_slice(), row, col)
 				};
-				next_board[idx].state = next_cell.state;
+				next_board[idx] = next_cell;
+				// debug_assert_eq!(next_board[idx].ruleset, board[idx].ruleset);
 			}
 		}
 	}
