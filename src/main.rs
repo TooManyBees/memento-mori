@@ -68,7 +68,6 @@ struct Model {
 	world: World,
 	brush: Brush,
 	draw_brush: bool,
-	drawing: bool,
 	graphics: Graphics,
 	animation_state: AnimationState,
 	last_generation_at: Instant,
@@ -105,7 +104,6 @@ fn model(app: &App) -> Model {
 			..Default::default()
 		},
 		draw_brush: false,
-		drawing: false,
 		graphics,
 		animation_state: AnimationState::Running,
 		last_generation_at: Instant::now() - GENERATION_RATE,
@@ -126,12 +124,12 @@ fn event(app: &App, model: &mut Model, event: Event) {
 				model.brush.pos = pos;
 				model.brush.col_row = get_cell_pos_under_pointer(pos);
 			}
-			WindowEvent::MousePressed(MouseButton::Left) => model.drawing = true,
-			WindowEvent::MouseReleased(MouseButton::Left) => model.drawing = false,
-			WindowEvent::MousePressed(MouseButton::Right) => println!("Mouse pressed: Right"),
-			WindowEvent::MouseReleased(MouseButton::Right) => println!("Mouse released: Right"),
-			WindowEvent::MousePressed(MouseButton::Middle) => println!("Mouse pressed: Middle"),
-			WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
+			// WindowEvent::MousePressed(MouseButton::Left) => println("Mouse pressed: Left"),
+			// WindowEvent::MouseReleased(MouseButton::Left) => println("Mouse released: Left"),
+			// WindowEvent::MousePressed(MouseButton::Right) => println!("Mouse pressed: Right"),
+			// WindowEvent::MouseReleased(MouseButton::Right) => println!("Mouse released: Right"),
+			// WindowEvent::MousePressed(MouseButton::Middle) => println!("Mouse pressed: Middle"),
+			// WindowEvent::MouseReleased(MouseButton::Middle) => println!("Mouse released: Middle"),
 			WindowEvent::KeyPressed(Key::Escape) => model.world.reset(),
 			WindowEvent::KeyPressed(Key::C) => model.world.clear(),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
@@ -210,26 +208,25 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	let advance_simulation =
 		model.is_running() && model.last_generation_at.elapsed() >= GENERATION_RATE;
 
-	if model.drawing {
-		fn paint_liveness(world: &mut World, brush: &Brush, idx: usize) {
-			let board = world.board_mut();
-			let brush_idx = brush.col_row.row * BOARD_WIDTH + brush.col_row.col;
-			if board[idx].ruleset == board[brush_idx].ruleset {
-				board[idx] = board[idx].ruleset.on();
-			}
+	fn paint_liveness(world: &mut World, brush: &Brush, idx: usize) {
+		let board = world.board_mut();
+		let brush_idx = brush.col_row.row * BOARD_WIDTH + brush.col_row.col;
+		let on = board[brush_idx].ruleset.on();
+		if board[idx].ruleset == board[brush_idx].ruleset {
+			board[idx] = on;
 		}
+	}
 
-		fn paint_ruleset(world: &mut World, brush: &Brush, idx: usize) {
-			let (board, next_board) = world.this_board_and_next();
-			board[idx].ruleset = brush.ruleset;
-			next_board[idx].ruleset = brush.ruleset;
-		}
+	fn paint_ruleset(world: &mut World, brush: &Brush, idx: usize) {
+		let (board, next_board) = world.this_board_and_next();
+		board[idx].ruleset = brush.ruleset;
+		next_board[idx].ruleset = brush.ruleset;
+	}
 
-		if app.keys.mods.ctrl() {
-			paint(model, paint_ruleset);
-		} else {
-			paint(model, paint_liveness);
-		}
+	if app.mouse.buttons.left().is_down() {
+		paint(model, paint_liveness);
+	} else if app.mouse.buttons.right().is_down() {
+		paint(model, paint_ruleset);
 	}
 
 	if advance_simulation {
