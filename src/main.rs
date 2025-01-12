@@ -161,13 +161,9 @@ fn paint(model: &mut Model, f: fn(&mut World, &Brush, usize)) {
 fn update(app: &App, model: &mut Model, _update: Update) {
 	let advance_simulation = model.last_generation_at.elapsed() >= GENERATION_RATE;
 
-	if advance_simulation {
-		model.world.generate();
-	}
-
 	if model.drawing {
 		fn paint_liveness(world: &mut World, brush: &Brush, idx: usize) {
-			let board = world.next_board_mut();
+			let board = world.board_mut();
 			let brush_idx = brush.col_row.row * BOARD_WIDTH + brush.col_row.col;
 			if board[idx].ruleset == board[brush_idx].ruleset {
 				board[idx] = board[idx].ruleset.on();
@@ -188,6 +184,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	}
 
 	if advance_simulation {
+		model.world.generate();
 		model.world.swap();
 		model.last_generation_at = Instant::now();
 	}

@@ -35,17 +35,10 @@ impl World {
 		}
 	}
 
-	fn board_mut(&mut self) -> &mut [Cell] {
+	pub fn board_mut(&mut self) -> &mut [Cell] {
 		match self.current_board {
 			CurrentBoard::A => &mut self.state_a,
 			CurrentBoard::B => &mut self.state_b,
-		}
-	}
-
-	pub fn next_board_mut(&mut self) -> &mut [Cell] {
-		match self.current_board {
-			CurrentBoard::A => &mut self.state_b,
-			CurrentBoard::B => &mut self.state_a,
 		}
 	}
 
