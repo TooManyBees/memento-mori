@@ -182,11 +182,25 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	if let Some(oni_manager) = &mut model.oni_manager {
 		if let Err(e) = oni_manager.update() {
 			println!("Error updating: {e:?}");
+		} else {
+			if oni_manager.is_anyone_here() {
+				model.world.temporary_rulesets.fill(None);
+				for row in 0..BOARD_HEIGHT {
+					for col in 0..BOARD_WIDTH {
+						let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
+						let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
+						let board_idx = row * BOARD_WIDTH + col;
+						if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
+							model.world.temporary_rulesets[board_idx] = Some(model.brush.ruleset);
+						}
+					}
+				}
+			}
 		}
 	}
 
 	if advance_simulation {
-		model.world.generate(model.oni_manager.as_ref());
+		model.world.generate();
 		model.world.swap();
 		model.last_generation_at = Instant::now();
 		model.animation_state = model.animation_state.next();
@@ -224,7 +238,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 fn view(app: &App, model: &Model, frame: Frame) {
 	let board = model.world.board();
 
-	render_graphics(&frame, &model.graphics, board, app.keys.mods.ctrl());
+	render_graphics(&frame, &model.graphics, &model.world, app.keys.mods.ctrl());
 
 	if model.draw_brush {
 		let draw = app.draw();

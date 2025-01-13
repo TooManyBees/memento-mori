@@ -1,4 +1,3 @@
-use crate::model::OniManager;
 use crate::rules::Ruleset;
 
 pub const BOARD_WIDTH: usize = 256;
@@ -15,17 +14,20 @@ pub struct World {
 	state_a: Vec<Cell>,
 	state_b: Vec<Cell>,
 	current_board: CurrentBoard,
+	pub temporary_rulesets: Vec<Option<Ruleset>>,
 }
 
 impl World {
 	pub fn new() -> Self {
 		let state_a = vec![Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
 		let state_b = state_a.clone();
+		let temporary_rulesets = vec![None; BOARD_WIDTH * BOARD_HEIGHT];
 
 		World {
 			state_a,
 			state_b,
 			current_board: CurrentBoard::A,
+			temporary_rulesets,
 		}
 	}
 
@@ -40,6 +42,23 @@ impl World {
 		match self.current_board {
 			CurrentBoard::A => &mut self.state_a,
 			CurrentBoard::B => &mut self.state_b,
+		}
+	}
+
+	fn this_board_and_next_and_temporary(
+		&mut self,
+	) -> (&mut [Cell], &mut [Cell], &[Option<Ruleset>]) {
+		match self.current_board {
+			CurrentBoard::A => (
+				&mut self.state_a,
+				&mut self.state_b,
+				&self.temporary_rulesets,
+			),
+			CurrentBoard::B => (
+				&mut self.state_b,
+				&mut self.state_a,
+				&self.temporary_rulesets,
+			),
 		}
 	}
 
@@ -72,8 +91,8 @@ impl World {
 		}
 	}
 
-	pub fn generate(&mut self, oni_manager: Option<&OniManager>) {
-		let (board, next_board) = self.this_board_and_next();
+	pub fn generate(&mut self) {
+		let (board, next_board, temporary_rulesets) = self.this_board_and_next_and_temporary();
 		// next_board
 		// 	.par_chunks_exact_mut(BOARD_WIDTH)
 		// 	.enumerate()
@@ -91,17 +110,7 @@ impl World {
 				let idx = row * BOARD_WIDTH + col;
 				let cell = board[idx];
 
-				let ruleset = oni_manager
-					.and_then(|oni_manager| {
-						let pct_x = col as f32 / BOARD_WIDTH as f32;
-						let pct_y = row as f32 / BOARD_HEIGHT as f32;
-						if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
-							Some(Ruleset::BriansBrain)
-						} else {
-							None
-						}
-					})
-					.unwrap_or(cell.ruleset);
+				let ruleset = temporary_rulesets[idx].unwrap_or(cell.ruleset);
 
 				let next_cell = ruleset.next_cell_state(board, row, col);
 				next_board[idx].state = next_cell.state;
