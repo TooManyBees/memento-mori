@@ -51,6 +51,23 @@ impl AnimationState {
 	}
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum DrawUserState {
+	Draw,
+	PaintAndDisappear,
+	None,
+}
+
+impl DrawUserState {
+	pub fn toggle(self) -> Self {
+		match self {
+			DrawUserState::Draw => DrawUserState::PaintAndDisappear,
+			DrawUserState::PaintAndDisappear => DrawUserState::None,
+			DrawUserState::None => DrawUserState::Draw,
+		}
+	}
+}
+
 pub struct Model {
 	pub world: World,
 	pub brush: Brush,
@@ -59,6 +76,7 @@ pub struct Model {
 	pub animation_state: AnimationState,
 	pub last_generation_at: Instant,
 	pub oni_manager: Option<OniManager>,
+	pub draw_user_state: DrawUserState,
 }
 
 impl Model {

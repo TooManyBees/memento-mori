@@ -4,7 +4,7 @@ mod rules;
 mod world;
 
 use crate::graphics::{make_graphics, render_graphics};
-use crate::model::{AnimationState, Brush, ColRow, Model, OniManager};
+use crate::model::{AnimationState, Brush, ColRow, DrawUserState, Model, OniManager};
 use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
@@ -53,6 +53,7 @@ fn model(app: &App) -> Model {
 		animation_state: AnimationState::Running,
 		last_generation_at: Instant::now() - GENERATION_RATE,
 		oni_manager: oni_manager.ok(),
+		draw_user_state: DrawUserState::Draw,
 	}
 }
 
@@ -79,6 +80,9 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::KeyPressed(Key::Escape) => model.world.reset(),
 			WindowEvent::KeyPressed(Key::C) => model.world.clear(),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
+			WindowEvent::KeyPressed(Key::U) => {
+				model.draw_user_state = model.draw_user_state.toggle()
+			}
 			WindowEvent::KeyPressed(Key::Tab) => model.brush.ruleset = model.brush.ruleset.next(),
 			WindowEvent::KeyPressed(Key::Space) => {
 				model.animation_state = model.animation_state.frame_step()
@@ -180,22 +184,31 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	}
 
 	if let Some(oni_manager) = &mut model.oni_manager {
-		if let Err(e) = oni_manager.update() {
-			println!("Error updating: {e:?}");
-		} else {
-			if oni_manager.is_anyone_here() {
-				model.world.temporary_rulesets.fill(None);
-				for row in 0..BOARD_HEIGHT {
-					for col in 0..BOARD_WIDTH {
-						let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
-						let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
-						let board_idx = row * BOARD_WIDTH + col;
-						if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
-							model.world.temporary_rulesets[board_idx] = Some(model.brush.ruleset);
+		match model.draw_user_state {
+			DrawUserState::Draw => {
+				if let Err(e) = oni_manager.update() {
+					println!("Error updating: {e:?}");
+				} else {
+					if oni_manager.is_anyone_here() {
+						model.world.temporary_rulesets.fill(None);
+						for row in 0..BOARD_HEIGHT {
+							for col in 0..BOARD_WIDTH {
+								let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
+								let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
+								let board_idx = row * BOARD_WIDTH + col;
+								if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
+									model.world.temporary_rulesets[board_idx] =
+										Some(model.brush.ruleset);
+								}
+							}
 						}
 					}
 				}
 			}
+			DrawUserState::PaintAndDisappear => {
+				model.world.temporary_rulesets.fill(None);
+			}
+			DrawUserState::None => {}
 		}
 	}
 
@@ -206,27 +219,26 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		model.animation_state = model.animation_state.next();
 	}
 
-	// if let Some(oni_manager) = &mut model.oni_manager {
-	// 	if let Err(e) = oni_manager.update() {
-	// 		println!("Error updating: {e:?}");
-	// 	} else {
-	// 		if oni_manager.is_anyone_here() {
-	// 			let (board, next_board) = model.world.this_board_and_next();
-	// 			for row in 0..BOARD_HEIGHT {
-	// 				for col in 0..BOARD_WIDTH {
-	// 					let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
-	// 					let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
+	if model.draw_user_state == DrawUserState::PaintAndDisappear {
+		if let Some(oni_manager) = &mut model.oni_manager {
+			if oni_manager.is_anyone_here() {
+				let (board, next_board) = model.world.this_board_and_next();
+				for row in 0..BOARD_HEIGHT {
+					for col in 0..BOARD_WIDTH {
+						let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
+						let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
 
-	// 					if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
-	// 						let board_idx = row * BOARD_WIDTH + col;
-	// 						board[board_idx].ruleset = model.brush.ruleset;
-	// 						next_board[board_idx].ruleset = model.brush.ruleset;
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
+						if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
+							let board_idx = row * BOARD_WIDTH + col;
+							board[board_idx].ruleset = model.brush.ruleset;
+							next_board[board_idx].ruleset = model.brush.ruleset;
+						}
+					}
+				}
+			}
+		}
+		model.draw_user_state = DrawUserState::None;
+	}
 
 	if app.mouse.buttons.left().is_down() {
 		paint(model, paint_liveness);
