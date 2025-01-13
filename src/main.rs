@@ -184,31 +184,25 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	}
 
 	if let Some(oni_manager) = &mut model.oni_manager {
-		match model.draw_user_state {
-			DrawUserState::Draw => {
-				if let Err(e) = oni_manager.update() {
-					println!("Error updating: {e:?}");
-				} else {
-					if oni_manager.is_anyone_here() {
-						model.world.temporary_rulesets.fill(None);
-						for row in 0..BOARD_HEIGHT {
-							for col in 0..BOARD_WIDTH {
-								let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
-								let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
-								let board_idx = row * BOARD_WIDTH + col;
-								if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
-									model.world.temporary_rulesets[board_idx] =
-										Some(model.brush.ruleset);
-								}
+		if model.draw_user_state == DrawUserState::Draw {
+			if let Err(e) = oni_manager.update() {
+				println!("Error updating: {e:?}");
+			} else {
+				if oni_manager.is_anyone_here() {
+					model.world.temporary_rulesets.fill(None);
+					for row in 0..BOARD_HEIGHT {
+						for col in 0..BOARD_WIDTH {
+							let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
+							let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
+							let board_idx = row * BOARD_WIDTH + col;
+							if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
+								model.world.temporary_rulesets[board_idx] =
+									Some(model.brush.ruleset);
 							}
 						}
 					}
 				}
 			}
-			DrawUserState::PaintAndDisappear => {
-				model.world.temporary_rulesets.fill(None);
-			}
-			DrawUserState::None => {}
 		}
 	}
 
@@ -222,22 +216,22 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	if model.draw_user_state == DrawUserState::PaintAndDisappear {
 		if let Some(oni_manager) = &mut model.oni_manager {
 			if oni_manager.is_anyone_here() {
-				let (board, next_board) = model.world.this_board_and_next();
-				for row in 0..BOARD_HEIGHT {
-					for col in 0..BOARD_WIDTH {
-						let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
-						let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
-
-						if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
-							let board_idx = row * BOARD_WIDTH + col;
-							board[board_idx].ruleset = model.brush.ruleset;
-							next_board[board_idx].ruleset = model.brush.ruleset;
-						}
+				let (board, next_board, temporary_rulesets) =
+					model.world.this_board_and_next_and_temporary();
+				for ((cell, next_cell), maybe_ruleset) in board
+					.iter_mut()
+					.zip(next_board.iter_mut())
+					.zip(temporary_rulesets)
+				{
+					if let Some(ruleset) = maybe_ruleset {
+						cell.ruleset = *ruleset;
+						next_cell.ruleset = *ruleset;
 					}
 				}
 			}
 		}
 		model.draw_user_state = DrawUserState::None;
+		model.world.temporary_rulesets.fill(None);
 	}
 
 	if app.mouse.buttons.left().is_down() {

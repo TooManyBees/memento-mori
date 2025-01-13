@@ -45,7 +45,7 @@ impl World {
 		}
 	}
 
-	fn this_board_and_next_and_temporary(
+	pub fn this_board_and_next_and_temporary(
 		&mut self,
 	) -> (&mut [Cell], &mut [Cell], &[Option<Ruleset>]) {
 		match self.current_board {
