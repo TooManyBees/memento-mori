@@ -36,9 +36,9 @@ fn model(app: &App) -> Model {
 
 	let graphics = make_graphics(app, BOARD_WIDTH, BOARD_HEIGHT);
 
-	let oni_manager = OniManager::create();
+	let oni_manager = OniManager::create(BOARD_WIDTH, BOARD_HEIGHT);
 	if let Err(ref e) = oni_manager {
-		println!("{e:?}");
+		println!("OniManager init failed: {e:?}");
 	}
 
 	Model {
@@ -179,36 +179,40 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		next_board[idx].ruleset = brush.ruleset;
 	}
 
+	if let Some(oni_manager) = &mut model.oni_manager {
+		if let Err(e) = oni_manager.update() {
+			println!("Error updating: {e:?}");
+		}
+	}
+
 	if advance_simulation {
-		model.world.generate();
+		model.world.generate(model.oni_manager.as_ref());
 		model.world.swap();
 		model.last_generation_at = Instant::now();
 		model.animation_state = model.animation_state.next();
 	}
 
-	if let Some(oni_manager) = &mut model.oni_manager {
-		if let Err(e) = oni_manager.update() {
-			println!("Error updating: {e:?}");
-		} else {
-			if oni_manager.is_anyone_here() {
-				let (board, next_board) = model.world.this_board_and_next();
-				for row in 0..BOARD_HEIGHT {
-					for col in 0..BOARD_WIDTH {
-						let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
-						let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
+	// if let Some(oni_manager) = &mut model.oni_manager {
+	// 	if let Err(e) = oni_manager.update() {
+	// 		println!("Error updating: {e:?}");
+	// 	} else {
+	// 		if oni_manager.is_anyone_here() {
+	// 			let (board, next_board) = model.world.this_board_and_next();
+	// 			for row in 0..BOARD_HEIGHT {
+	// 				for col in 0..BOARD_WIDTH {
+	// 					let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
+	// 					let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
 
-						let board_idx = row * BOARD_WIDTH + col;
-						let map_idx = oni_manager.index_at(pct_x, pct_y);
-
-						if oni_manager.user_map[map_idx] > 0 {
-							board[board_idx].ruleset = model.brush.ruleset;
-							next_board[board_idx].ruleset = model.brush.ruleset;
-						}
-					}
-				}
-			}
-		}
-	}
+	// 					if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
+	// 						let board_idx = row * BOARD_WIDTH + col;
+	// 						board[board_idx].ruleset = model.brush.ruleset;
+	// 						next_board[board_idx].ruleset = model.brush.ruleset;
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	if app.mouse.buttons.left().is_down() {
 		paint(model, paint_liveness);

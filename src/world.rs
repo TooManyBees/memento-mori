@@ -1,3 +1,4 @@
+use crate::model::OniManager;
 use crate::rules::Ruleset;
 
 pub const BOARD_WIDTH: usize = 256;
@@ -71,7 +72,7 @@ impl World {
 		}
 	}
 
-	pub fn generate(&mut self) {
+	pub fn generate(&mut self, oni_manager: Option<&OniManager>) {
 		let (board, next_board) = self.this_board_and_next();
 		// next_board
 		// 	.par_chunks_exact_mut(BOARD_WIDTH)
@@ -89,7 +90,20 @@ impl World {
 			for col in 0..BOARD_WIDTH {
 				let idx = row * BOARD_WIDTH + col;
 				let cell = board[idx];
-				let next_cell = cell.ruleset.next_cell_state(board, row, col);
+
+				let ruleset = oni_manager
+					.and_then(|oni_manager| {
+						let pct_x = col as f32 / BOARD_WIDTH as f32;
+						let pct_y = row as f32 / BOARD_HEIGHT as f32;
+						if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
+							Some(Ruleset::BriansBrain)
+						} else {
+							None
+						}
+					})
+					.unwrap_or(cell.ruleset);
+
+				let next_cell = ruleset.next_cell_state(board, row, col);
 				next_board[idx].state = next_cell.state;
 			}
 		}
