@@ -1,10 +1,12 @@
+#[cfg(feature = "nite")]
 mod oni_manager;
+#[cfg(feature = "nite")]
+pub use oni_manager::OniManager;
 
 use crate::graphics::Graphics;
 use crate::rules::Ruleset;
 use crate::world::World;
 use nannou::prelude::*;
-pub use oni_manager::OniManager;
 use std::time::Instant;
 
 #[derive(Default)]
@@ -75,6 +77,7 @@ pub struct Model {
 	pub graphics: Graphics,
 	pub animation_state: AnimationState,
 	pub last_generation_at: Instant,
+	#[cfg(feature = "nite")]
 	pub oni_manager: Option<OniManager>,
 	pub draw_user_state: DrawUserState,
 }

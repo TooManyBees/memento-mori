@@ -4,7 +4,9 @@ mod rules;
 mod world;
 
 use crate::graphics::{make_graphics, render_graphics};
-use crate::model::{AnimationState, Brush, ColRow, DrawUserState, Model, OniManager};
+#[cfg(feature = "nite")]
+use crate::model::OniManager;
+use crate::model::{AnimationState, Brush, ColRow, DrawUserState, Model};
 use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
@@ -36,10 +38,14 @@ fn model(app: &App) -> Model {
 
 	let graphics = make_graphics(app, BOARD_WIDTH, BOARD_HEIGHT);
 
-	let oni_manager = OniManager::create(BOARD_WIDTH, BOARD_HEIGHT);
-	if let Err(ref e) = oni_manager {
-		println!("OniManager init failed: {e:?}");
-	}
+	#[cfg(feature = "nite")]
+	let oni_manager = match OniManager::create(BOARD_WIDTH, BOARD_HEIGHT) {
+		Ok(oni) => Some(oni),
+		Err(e) => {
+			println!("OniManager init failed: {e:?}");
+			None
+		}
+	};
 
 	Model {
 		world: World::new(),
@@ -52,7 +58,8 @@ fn model(app: &App) -> Model {
 		graphics,
 		animation_state: AnimationState::Running,
 		last_generation_at: Instant::now() - GENERATION_RATE,
-		oni_manager: oni_manager.ok(),
+		#[cfg(feature = "nite")]
+		oni_manager,
 		draw_user_state: DrawUserState::Draw,
 	}
 }
@@ -183,6 +190,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		next_board[idx].ruleset = brush.ruleset;
 	}
 
+	#[cfg(feature = "nite")]
 	if let Some(oni_manager) = &mut model.oni_manager {
 		if model.draw_user_state == DrawUserState::Draw {
 			if let Err(e) = oni_manager.update() {
@@ -214,6 +222,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	}
 
 	if model.draw_user_state == DrawUserState::PaintAndDisappear {
+		#[cfg(feature = "nite")]
 		if let Some(oni_manager) = &mut model.oni_manager {
 			if oni_manager.is_anyone_here() {
 				let (board, next_board, temporary_rulesets) =

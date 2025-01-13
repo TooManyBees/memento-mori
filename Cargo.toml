@@ -5,5 +5,9 @@ edition = "2021"
 
 [dependencies]
 nannou = "0.19"
-openni2 = "0.3.0"
-nite2 = { path = "../rust-nite2" }
+openni2 = { version = "0.3.0", optional = true }
+nite2 = { path = "../rust-nite2", optional = true }
+
+[features]
+nite = ["dep:openni2", "dep:nite2"]
+default = ["nite"]
