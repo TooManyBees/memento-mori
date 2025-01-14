@@ -80,6 +80,8 @@ pub struct Model {
 	#[cfg(feature = "nite")]
 	pub oni_manager: Option<OniManager>,
 	pub draw_user_state: DrawUserState,
+	pub record_frames: u16,
+	pub capture_frame: bool,
 }
 
 impl Model {
