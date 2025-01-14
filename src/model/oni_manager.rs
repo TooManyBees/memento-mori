@@ -1,11 +1,12 @@
 pub use nite2::NiteUserId;
-use nite2::UserTrackerManager;
+use nite2::UserTracker;
 use openni2::{Device, OniRGB888Pixel, SensorType, Stream};
 
 pub struct OniManager {
 	#[allow(dead_code)]
 	device: &'static Device,
-	user_tracker: &'static mut UserTrackerManager<'static>,
+	depth_stream: &'static Stream<'static>,
+	user_tracker: &'static mut UserTracker<'static>,
 	user_map: &'static mut [NiteUserId],
 	users_present: bool,
 	user_map_width: usize,
@@ -71,13 +72,12 @@ impl OniManager {
 		nite2::init()?;
 
 		let default_device = Box::leak(Box::new(Device::open_default()?));
-		let depth_stream = default_device.create_stream(SensorType::DEPTH)?;
+		let depth_stream = Box::leak(Box::new(default_device.create_stream(SensorType::DEPTH)?));
 		let depth_mode = depth_stream.get_video_mode()?;
 		println!("{:?}", depth_mode);
 		let user_map_width = depth_mode.resolution_x as usize;
 		let user_map_height = depth_mode.resolution_y as usize;
-		let mut user_tracker = UserTrackerManager::create()?;
-		let _ = user_tracker.track_skeletons(false);
+		let user_tracker = UserTracker::open_default()?;
 
 		let color_stream = default_device.create_stream(SensorType::COLOR)?;
 		color_stream.start()?;
@@ -121,6 +121,7 @@ impl OniManager {
 
 		Ok(OniManager {
 			device: default_device,
+			depth_stream,
 			user_tracker: Box::leak(Box::new(user_tracker)),
 			user_map: vec![0; user_map_width * user_map_height].leak(),
 			users_present: false,
@@ -139,6 +140,17 @@ impl OniManager {
 			color_width,
 			color_height,
 		})
+	}
+}
+
+impl Drop for OniManager {
+	fn drop(&mut self) {
+		self.user_tracker.shutdown();
+		self.depth_stream.stop();
+		self.color_stream.stop();
+		self.device.close();
+		let _ = nite2::shutdown();
+		let _ = openni2::shutdown();
 	}
 }
 

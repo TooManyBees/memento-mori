@@ -1039,7 +1039,7 @@ version = "0.1.0"
 dependencies = [
  "nannou",
  "nite2",
- "openni2",
+ "openni2 0.3.0",
 ]
 
 [[package]]
@@ -1256,7 +1256,7 @@ name = "nite2"
 version = "0.1.0"
 dependencies = [
  "nite2-sys",
- "openni2",
+ "openni2 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1461,6 +1461,13 @@ name = "once_cell"
 version = "1.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
+
+[[package]]
+name = "openni2"
+version = "0.3.0"
+dependencies = [
+ "openni2-sys",
+]
 
 [[package]]
 name = "openni2"
