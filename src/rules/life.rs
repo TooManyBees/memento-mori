@@ -27,18 +27,13 @@ impl Life {
 		}
 	}
 
-	fn state(cell: Cell) -> State {
-		if cell.state >= State::Alive as u8 {
-			State::Alive
-		} else {
-			State::Dead
-		}
-	}
-
 	pub fn color(cell: Cell) -> LinSrgba {
-		match Life::state(cell) {
-			State::Alive => LinSrgba::new(1.0, 1.0, 1.0, 1.0),
-			State::Dead => LinSrgba::new(0.0, 0.0, 0.0, 1.0),
+		match cell.state {
+			0b11 => LinSrgba::new(1.0, 1.0, 1.0, 1.0),
+			0b01 => LinSrgba::new(0.8, 0.8, 0.8, 1.0),
+			// 0b10 => LinSrgba::new(0.05, 0.05, 0.05, 1.0),
+			0b00 => LinSrgba::new(0.0, 0.0, 0.0, 1.0),
+			_ => LinSrgba::new(0.0, 0.0, 0.0, 1.0),
 		}
 	}
 
@@ -100,11 +95,23 @@ fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 	let live_neighbors = count_live_neighbors(board, row, col);
 	let idx = row * BOARD_WIDTH + col;
 
-	match (Life::state(board[idx]), live_neighbors) {
-		(State::Alive, 0) | (State::Alive, 1) => Life::dead(),
-		(State::Alive, 2) | (State::Alive, 3) => Life::alive(),
-		(State::Alive, _) => Life::dead(),
-		(State::Dead, 3) => Life::alive(),
-		_ => board[idx],
+	let is_alive = board[idx].state & 0b01 > 0;
+	let state = if is_alive {
+		if live_neighbors == 2 || live_neighbors == 3 {
+			State::Alive as u8 | 0b10
+		} else {
+			State::Dead as u8 | 0b10
+		}
+	} else {
+		if live_neighbors == 3 {
+			State::Alive as u8
+		} else {
+			State::Dead as u8
+		}
+	};
+
+	Cell {
+		state,
+		ruleset: Ruleset::Life,
 	}
 }

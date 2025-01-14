@@ -30,8 +30,10 @@ impl AntiLife {
 	pub fn color(cell: Cell) -> LinSrgba {
 		match cell.state {
 			0b11 => LinSrgba::new(1.0, 1.0, 1.0, 1.0),
-			0b10 => LinSrgba::new(0.0, 0.0, 1.0, 1.0),
-			0b01 => LinSrgba::new(0.0, 1.0, 0.0, 1.0),
+			// 0b10 => LinSrgba::new(0.0, 0.0, 1.0, 1.0),
+			0b10 => LinSrgba::new(1.0, 0.9, 0.8, 1.0),
+			// 0b01 => LinSrgba::new(0.0, 1.0, 0.0, 1.0),
+			0b01 => LinSrgba::new(1.0, 0.2, 0.1, 1.0),
 			0b00 => LinSrgba::new(1.0, 0.0, 0.0, 1.0),
 			_ => LinSrgba::new(0.0, 0.0, 0.0, 1.0), // Black == undefined
 		}
