@@ -61,6 +61,8 @@ fn model(app: &App) -> Model {
 		#[cfg(feature = "nite")]
 		oni_manager,
 		draw_user_state: DrawUserState::Draw,
+		record_frames: 0,
+		capture_frame: false,
 	}
 }
 
@@ -108,6 +110,7 @@ fn event(app: &App, model: &mut Model, event: Event) {
 					}
 				}
 			}
+			WindowEvent::KeyPressed(Key::N) => model.record_frames = 150,
 			_ => {}
 		},
 		_ => {}
@@ -257,12 +260,30 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 	} else if app.mouse.buttons.right().is_down() {
 		paint(model, paint_ruleset);
 	}
+
+	if advance_simulation && model.record_frames > 0 {
+		model.record_frames -= 1;
+		model.capture_frame = true;
+	} else {
+		model.capture_frame = false;
+	}
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
 	let board = model.world.board();
 
 	render_graphics(&frame, &model.graphics, &model.world, app.keys.mods.ctrl());
+
+	if model.capture_frame {
+		println!("capture {}", model.record_frames);
+		let file_path = app
+			.project_path()
+			.unwrap()
+			.join("capture")
+			.join(format!("{}_{:03}", app.exe_name().unwrap(), frame.nth()))
+			.with_extension("bmp");
+		app.main_window().capture_frame(file_path);
+	}
 
 	if model.draw_brush {
 		let draw = app.draw();
