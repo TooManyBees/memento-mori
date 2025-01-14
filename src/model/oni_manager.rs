@@ -9,26 +9,24 @@ pub struct OniManager {
 	user_tracker: &'static mut UserTracker<'static>,
 	user_map: &'static mut [NiteUserId],
 	users_present: bool,
-	user_map_width: usize,
-	user_map_height: usize,
-	user_map_offset_x: f32,
-	user_map_offset_y: f32,
-	user_map_scale_x: f32,
-	user_map_scale_y: f32,
+	stream_width: usize,
+	stream_height: usize,
+	stream_offset_x: f32,
+	stream_offset_y: f32,
+	stream_scale_x: f32,
+	stream_scale_y: f32,
 	color_stream: &'static Stream<'static>,
 	color_frame: &'static mut [u8],
-	color_width: usize,
-	color_height: usize,
 }
 
 impl OniManager {
 	pub fn update(&mut self) -> Result<(), OniError> {
 		let user_frame = self.user_tracker.read_frame()?;
 		let user_map = user_frame.user_map();
-		if self.user_map_width != user_map.width || self.user_map_height != user_map.height {
+		if self.stream_width != user_map.width || self.stream_height != user_map.height {
 			println!(
 				"Wrong user map dimensions! Expected {}x{}, got {}x{}",
-				self.user_map_width, self.user_map_height, user_map.width, user_map.height
+				self.stream_width, self.stream_height, user_map.width, user_map.height
 			);
 			// FIXME obviously this is not "ok"
 			return Ok(());
@@ -73,14 +71,14 @@ impl OniManager {
 	}
 
 	fn coords_to_idx(&self, board_pct_x: f32, board_pct_y: f32) -> Option<usize> {
-		let pct_x = (board_pct_x - self.user_map_offset_x) * self.user_map_scale_x;
-		let pct_y = (board_pct_y - self.user_map_offset_y) * self.user_map_scale_y;
+		let pct_x = (board_pct_x - self.stream_offset_x) * self.stream_scale_x;
+		let pct_y = (board_pct_y - self.stream_offset_y) * self.stream_scale_y;
 		if pct_y < 0.0 || pct_y > 1.0 || pct_x < 0.0 || pct_x > 1.0 {
 			return None;
 		}
-		let row = (pct_y * (self.user_map_height - 1) as f32) as usize;
-		let col = (pct_x * (self.user_map_width - 1) as f32) as usize;
-		let idx = row * self.user_map_width + col;
+		let row = (pct_y * (self.stream_height - 1) as f32) as usize;
+		let col = (pct_x * (self.stream_width - 1) as f32) as usize;
+		let idx = row * self.stream_width + col;
 		Some(idx)
 	}
 
@@ -91,9 +89,8 @@ impl OniManager {
 		let default_device = Box::leak(Box::new(Device::open_default()?));
 		let depth_stream = Box::leak(Box::new(default_device.create_stream(SensorType::DEPTH)?));
 		let depth_mode = depth_stream.get_video_mode()?;
-		println!("{:?}", depth_mode);
-		let user_map_width = depth_mode.resolution_x as usize;
-		let user_map_height = depth_mode.resolution_y as usize;
+		let stream_width = depth_mode.resolution_x as usize;
+		let stream_height = depth_mode.resolution_y as usize;
 		let user_tracker = UserTracker::open_default()?;
 
 		let color_stream = default_device.create_stream(SensorType::COLOR)?;
@@ -103,18 +100,15 @@ impl OniManager {
 			resolution_y: 240,
 			fps: 30,
 		};
-		// println!("{:?}", color_mode);
 		color_stream.set_video_mode(color_mode)?;
 		color_stream.start()?;
-		let color_width = color_mode.resolution_x as usize;
-		let color_height = color_mode.resolution_y as usize;
 		if let Err(e) = default_device.set_image_registration(true) {
 			println!("Failed to set depth/color registration: {:?}", e);
 		}
 
-		let (user_map_offset_x, user_map_offset_y, user_map_scale_x, user_map_scale_y) = {
+		let (stream_offset_x, stream_offset_y, stream_scale_x, stream_scale_y) = {
 			let board_ratio = board_width as f32 / board_height as f32;
-			let stream_ratio = user_map_width as f32 / user_map_height as f32;
+			let stream_ratio = stream_width as f32 / stream_height as f32;
 
 			if stream_ratio > board_ratio {
 				// When stream is wider than board, align it to the board's bottom
@@ -138,30 +132,28 @@ impl OniManager {
 
 		// println!(
 		// 	"Given board of {}x{} and user map of {}x{},\nposition user map at {},{} and scale coords {},{}",
-		// 	board_width, board_height, user_map_width, user_map_height,
-		// 	user_map_offset_x, user_map_offset_y, user_map_scale_x, user_map_scale_y
+		// 	board_width, board_height, stream_width, stream_height,
+		// 	stream_offset_x, stream_offset_y, stream_scale_x, stream_scale_y
 		// );
 
 		Ok(OniManager {
 			device: default_device,
 			depth_stream,
 			user_tracker: Box::leak(Box::new(user_tracker)),
-			user_map: vec![0; user_map_width * user_map_height].leak(),
+			user_map: vec![0; stream_width * stream_height].leak(),
 			users_present: false,
-			user_map_width,
-			user_map_height,
-			user_map_offset_x,
-			user_map_offset_y,
-			user_map_scale_x,
-			user_map_scale_y,
+			stream_width,
+			stream_height,
+			stream_offset_x,
+			stream_offset_y,
+			stream_scale_x,
+			stream_scale_y,
 			color_stream: Box::leak(Box::new(color_stream)),
 			color_frame: vec![
 				0;
 				color_mode.resolution_x as usize * color_mode.resolution_y as usize
 			]
 			.leak(),
-			color_width,
-			color_height,
 		})
 	}
 }
