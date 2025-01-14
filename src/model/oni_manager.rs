@@ -1,6 +1,6 @@
 pub use nite2::NiteUserId;
 use nite2::UserTracker;
-use openni2::{Device, OniRGB888Pixel, SensorType, Stream};
+use openni2::{Device, OniRGB888Pixel, PixelFormat, SensorType, Stream, VideoMode};
 
 pub struct OniManager {
 	#[allow(dead_code)]
@@ -16,7 +16,7 @@ pub struct OniManager {
 	user_map_scale_x: f32,
 	user_map_scale_y: f32,
 	color_stream: &'static Stream<'static>,
-	color_frame: &'static mut [OniRGB888Pixel],
+	color_frame: &'static mut [u8],
 	color_width: usize,
 	color_height: usize,
 }
@@ -33,12 +33,23 @@ impl OniManager {
 			// FIXME obviously this is not "ok"
 			return Ok(());
 		}
-
 		self.users_present = !user_frame.users().is_empty();
 		self.user_map.copy_from_slice(user_map.pixels);
 
 		let color_frame = self.color_stream.read_frame::<OniRGB888Pixel>()?;
-		self.color_frame.copy_from_slice(color_frame.pixels());
+		if self.color_frame.len() != color_frame.pixels().len() {
+			println!(
+				"Wrong color frame length! Expected {}, got {}",
+				self.color_frame.len(),
+				color_frame.pixels().len()
+			);
+			return Ok(());
+		}
+		for (i, pixel) in color_frame.pixels().iter().enumerate() {
+			let mut value = pixel.r as u16 + pixel.g as u16 + pixel.b as u16;
+			value /= 3;
+			self.color_frame[i] = value as u8;
+		}
 
 		Ok(())
 	}
@@ -48,23 +59,29 @@ impl OniManager {
 	}
 
 	pub fn user_at_coords(&self, board_pct_x: f32, board_pct_y: f32) -> NiteUserId {
+		match self.coords_to_idx(board_pct_x, board_pct_y) {
+			Some(idx) => self.user_map[idx],
+			None => 0,
+		}
+	}
+
+	pub fn state_at_coords(&self, board_pct_x: f32, board_pct_y: f32) -> u8 {
+		match self.coords_to_idx(board_pct_x, board_pct_y) {
+			Some(idx) => self.color_frame[idx],
+			None => 0,
+		}
+	}
+
+	fn coords_to_idx(&self, board_pct_x: f32, board_pct_y: f32) -> Option<usize> {
 		let pct_x = (board_pct_x - self.user_map_offset_x) * self.user_map_scale_x;
 		let pct_y = (board_pct_y - self.user_map_offset_y) * self.user_map_scale_y;
 		if pct_y < 0.0 || pct_y > 1.0 || pct_x < 0.0 || pct_x > 1.0 {
-			return 0;
+			return None;
 		}
 		let row = (pct_y * (self.user_map_height - 1) as f32) as usize;
 		let col = (pct_x * (self.user_map_width - 1) as f32) as usize;
 		let idx = row * self.user_map_width + col;
-		self.user_map[idx]
-	}
-
-	pub fn color_frame(&self) -> (&[OniRGB888Pixel], usize, usize) {
-		(self.color_frame, self.color_width, self.color_height)
-	}
-
-	pub fn user_map(&self) -> (&[NiteUserId], usize, usize) {
-		(self.user_map, self.user_map_width, self.user_map_height)
+		Some(idx)
 	}
 
 	pub fn create(board_width: usize, board_height: usize) -> Result<OniManager, OniError> {
@@ -80,11 +97,17 @@ impl OniManager {
 		let user_tracker = UserTracker::open_default()?;
 
 		let color_stream = default_device.create_stream(SensorType::COLOR)?;
+		let color_mode = VideoMode {
+			pixel_format: PixelFormat::RGB888,
+			resolution_x: 320,
+			resolution_y: 240,
+			fps: 30,
+		};
+		// println!("{:?}", color_mode);
+		color_stream.set_video_mode(color_mode)?;
 		color_stream.start()?;
-		let color_mode = color_stream.get_video_mode()?;
 		let color_width = color_mode.resolution_x as usize;
 		let color_height = color_mode.resolution_y as usize;
-		println!("{:?}", color_mode);
 		if let Err(e) = default_device.set_image_registration(true) {
 			println!("Failed to set depth/color registration: {:?}", e);
 		}
@@ -133,7 +156,7 @@ impl OniManager {
 			user_map_scale_y,
 			color_stream: Box::leak(Box::new(color_stream)),
 			color_frame: vec![
-				OniRGB888Pixel { r: 0, g: 0, b: 0 };
+				0;
 				color_mode.resolution_x as usize * color_mode.resolution_y as usize
 			]
 			.leak(),

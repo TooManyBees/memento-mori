@@ -15,6 +15,7 @@ pub struct World {
 	state_b: Vec<Cell>,
 	current_board: CurrentBoard,
 	pub temporary_rulesets: Vec<Option<Ruleset>>,
+	pub temporary_states: Vec<Option<u8>>,
 }
 
 impl World {
@@ -22,12 +23,14 @@ impl World {
 		let state_a = vec![Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
 		let state_b = state_a.clone();
 		let temporary_rulesets = vec![None; BOARD_WIDTH * BOARD_HEIGHT];
+		let temporary_states = vec![None; BOARD_WIDTH * BOARD_HEIGHT];
 
 		World {
 			state_a,
 			state_b,
 			current_board: CurrentBoard::A,
 			temporary_rulesets,
+			temporary_states,
 		}
 	}
 
@@ -47,17 +50,19 @@ impl World {
 
 	pub fn this_board_and_next_and_temporary(
 		&mut self,
-	) -> (&mut [Cell], &mut [Cell], &[Option<Ruleset>]) {
+	) -> (&mut [Cell], &mut [Cell], &[Option<Ruleset>], &[Option<u8>]) {
 		match self.current_board {
 			CurrentBoard::A => (
 				&mut self.state_a,
 				&mut self.state_b,
 				&self.temporary_rulesets,
+				&self.temporary_states,
 			),
 			CurrentBoard::B => (
 				&mut self.state_b,
 				&mut self.state_a,
 				&self.temporary_rulesets,
+				&self.temporary_states,
 			),
 		}
 	}
@@ -92,7 +97,8 @@ impl World {
 	}
 
 	pub fn generate(&mut self) {
-		let (board, next_board, temporary_rulesets) = self.this_board_and_next_and_temporary();
+		let (board, next_board, temporary_rulesets, temporary_states) =
+			self.this_board_and_next_and_temporary();
 		// next_board
 		// 	.par_chunks_exact_mut(BOARD_WIDTH)
 		// 	.enumerate()
@@ -105,6 +111,18 @@ impl World {
 		// 		}
 		// 	});
 
+		let scratch_board = board
+			.iter()
+			.zip(temporary_states)
+			.map(|(cell, maybe_state)| {
+				let state = maybe_state.unwrap_or(cell.state);
+				Cell {
+					ruleset: cell.ruleset,
+					state,
+				}
+			})
+			.collect::<Vec<Cell>>();
+
 		for row in 0..BOARD_HEIGHT {
 			for col in 0..BOARD_WIDTH {
 				let idx = row * BOARD_WIDTH + col;
@@ -112,7 +130,7 @@ impl World {
 
 				let ruleset = temporary_rulesets[idx].unwrap_or(cell.ruleset);
 
-				let next_cell = ruleset.next_cell_state(board, row, col);
+				let next_cell = ruleset.next_cell_state(scratch_board.as_slice(), row, col);
 				next_board[idx].state = next_cell.state;
 			}
 		}

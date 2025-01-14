@@ -198,6 +198,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 			} else {
 				if oni_manager.is_anyone_here() {
 					model.world.temporary_rulesets.fill(None);
+					model.world.temporary_states.fill(None);
 					for row in 0..BOARD_HEIGHT {
 						for col in 0..BOARD_WIDTH {
 							let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
@@ -206,6 +207,10 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 							if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
 								model.world.temporary_rulesets[board_idx] =
 									Some(model.brush.ruleset);
+								if oni_manager.state_at_coords(pct_x, pct_y) > 100 {
+									model.world.temporary_states[board_idx] =
+										Some(model.brush.ruleset.on().state)
+								}
 							}
 						}
 					}
@@ -225,16 +230,20 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		#[cfg(feature = "nite")]
 		if let Some(oni_manager) = &mut model.oni_manager {
 			if oni_manager.is_anyone_here() {
-				let (board, next_board, temporary_rulesets) =
+				let (board, next_board, temporary_rulesets, temporary_states) =
 					model.world.this_board_and_next_and_temporary();
-				for ((cell, next_cell), maybe_ruleset) in board
+				for (((cell, next_cell), maybe_ruleset), maybe_state) in board
 					.iter_mut()
 					.zip(next_board.iter_mut())
 					.zip(temporary_rulesets)
+					.zip(temporary_states)
 				{
 					if let Some(ruleset) = maybe_ruleset {
 						cell.ruleset = *ruleset;
 						next_cell.ruleset = *ruleset;
+					}
+					if let Some(state) = maybe_state {
+						next_cell.state = *state;
 					}
 				}
 			}
