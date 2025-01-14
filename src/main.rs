@@ -4,7 +4,10 @@ mod rules;
 mod world;
 
 use crate::graphics::{make_graphics, render_graphics};
-use crate::model::{AnimationState, Brush, ColRow, Model};
+#[cfg(feature = "nite")]
+use crate::model::OniManager;
+use crate::model::{AnimationState, Brush, ColRow, DrawUserState, Model};
+use crate::rules::Ruleset;
 use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
 use nannou::prelude::*;
 use std::time::{Duration, Instant};
@@ -35,16 +38,29 @@ fn model(app: &App) -> Model {
 
 	let graphics = make_graphics(app, BOARD_WIDTH, BOARD_HEIGHT);
 
+	#[cfg(feature = "nite")]
+	let oni_manager = match OniManager::create(BOARD_WIDTH, BOARD_HEIGHT) {
+		Ok(oni) => Some(oni),
+		Err(e) => {
+			println!("OniManager init failed: {e:?}");
+			None
+		}
+	};
+
 	Model {
 		world: World::new(),
 		brush: Brush {
 			size: 3,
+			ruleset: Ruleset::default().next(),
 			..Default::default()
 		},
 		draw_brush: false,
 		graphics,
 		animation_state: AnimationState::Running,
 		last_generation_at: Instant::now() - GENERATION_RATE,
+		#[cfg(feature = "nite")]
+		oni_manager,
+		draw_user_state: DrawUserState::Draw,
 	}
 }
 
@@ -71,6 +87,9 @@ fn event(app: &App, model: &mut Model, event: Event) {
 			WindowEvent::KeyPressed(Key::Escape) => model.world.reset(),
 			WindowEvent::KeyPressed(Key::C) => model.world.clear(),
 			WindowEvent::KeyPressed(Key::R) => model.world.randomize(),
+			WindowEvent::KeyPressed(Key::U) => {
+				model.draw_user_state = model.draw_user_state.toggle()
+			}
 			WindowEvent::KeyPressed(Key::Tab) => model.brush.ruleset = model.brush.ruleset.next(),
 			WindowEvent::KeyPressed(Key::Space) => {
 				model.animation_state = model.animation_state.frame_step()
@@ -171,11 +190,66 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 		next_board[idx].ruleset = brush.ruleset;
 	}
 
+	#[cfg(feature = "nite")]
+	if let Some(oni_manager) = &mut model.oni_manager {
+		if model.draw_user_state == DrawUserState::Draw {
+			if let Err(e) = oni_manager.update() {
+				println!("Error updating: {e:?}");
+			} else {
+				if oni_manager.is_anyone_here() {
+					model.world.temporary_rulesets.fill(None);
+					model.world.temporary_states.fill(None);
+					for row in 0..BOARD_HEIGHT {
+						for col in 0..BOARD_WIDTH {
+							let pct_y = row as f32 / (BOARD_HEIGHT - 1) as f32;
+							let pct_x = col as f32 / (BOARD_WIDTH - 1) as f32;
+							let board_idx = row * BOARD_WIDTH + col;
+							if oni_manager.user_at_coords(pct_x, pct_y) > 0 {
+								model.world.temporary_rulesets[board_idx] =
+									Some(model.brush.ruleset);
+								if oni_manager.state_at_coords(pct_x, pct_y) > 100 {
+									model.world.temporary_states[board_idx] =
+										Some(model.brush.ruleset.on().state)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if advance_simulation {
 		model.world.generate();
 		model.world.swap();
 		model.last_generation_at = Instant::now();
 		model.animation_state = model.animation_state.next();
+	}
+
+	if model.draw_user_state == DrawUserState::PaintAndDisappear {
+		#[cfg(feature = "nite")]
+		if let Some(oni_manager) = &mut model.oni_manager {
+			if oni_manager.is_anyone_here() {
+				let (board, next_board, temporary_rulesets, temporary_states) =
+					model.world.this_board_and_next_and_temporary();
+				for (((cell, next_cell), maybe_ruleset), maybe_state) in board
+					.iter_mut()
+					.zip(next_board.iter_mut())
+					.zip(temporary_rulesets)
+					.zip(temporary_states)
+				{
+					if let Some(ruleset) = maybe_ruleset {
+						cell.ruleset = *ruleset;
+						next_cell.ruleset = *ruleset;
+					}
+					if let Some(state) = maybe_state {
+						next_cell.state = *state;
+					}
+				}
+			}
+		}
+		model.draw_user_state = DrawUserState::None;
+		model.world.temporary_rulesets.fill(None);
 	}
 
 	if app.mouse.buttons.left().is_down() {
@@ -188,7 +262,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 fn view(app: &App, model: &Model, frame: Frame) {
 	let board = model.world.board();
 
-	render_graphics(&frame, &model.graphics, board, app.keys.mods.ctrl());
+	render_graphics(&frame, &model.graphics, &model.world, app.keys.mods.ctrl());
 
 	if model.draw_brush {
 		let draw = app.draw();

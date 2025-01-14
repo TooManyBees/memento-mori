@@ -1038,6 +1038,8 @@ name = "memento-mori"
 version = "0.1.0"
 dependencies = [
  "nannou",
+ "nite2",
+ "openni2 0.3.0",
 ]
 
 [[package]]
@@ -1250,6 +1252,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "nite2"
+version = "0.1.0"
+dependencies = [
+ "nite2-sys",
+ "openni2 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "nite2-sys"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01162e6a7b39febca34e897270e2f95229971e496e4d45cb1bc97db3c46a8ed1"
+dependencies = [
+ "openni2-sys",
+]
+
+[[package]]
 name = "nix"
 version = "0.24.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1442,6 +1461,28 @@ name = "once_cell"
 version = "1.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
+
+[[package]]
+name = "openni2"
+version = "0.3.0"
+dependencies = [
+ "openni2-sys",
+]
+
+[[package]]
+name = "openni2"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcc48a58468d8021d31e4c40de9635d90ffd07d51ae4ea252f75df14b476b1c1"
+dependencies = [
+ "openni2-sys",
+]
+
+[[package]]
+name = "openni2-sys"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40564aea667e36410c592a5e2cdf07b8b9c9cf48adeb53e4a96de32afaeb518c"
 
 [[package]]
 name = "orbclient"
