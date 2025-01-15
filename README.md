@@ -29,4 +29,4 @@ Some time later, on that same social media feed, I stumbled upon [Don Hopkins's 
 
 About 5 minutes in, when he says "[Rudy Rucker](https://www.rudyrucker.com) came up with a nifty idea of combining Brian's Brain together with Life and one called Anneal…" is when I began to draw some parallels.
 
-I want to think a bit about systems that tend away from equilibrium, and the semi-arbitrary distinctions that most of us make between life and death, between "something" that's a part of a system and other "somethings" that aren't part of a system, or cease to be part of it.
+I want to think a bit about systems that tend away from equilibrium, and the semi-arbitrary distinctions that most of us make between life and death, between "somethings" that are a part of a system and other "somethings" that aren't part of a system, and the moment when we change our determination about what is or isn't alive.
