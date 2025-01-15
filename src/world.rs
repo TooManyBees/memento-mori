@@ -61,7 +61,7 @@ impl Growth {
 	}
 
 	fn has_competing_rulesets(&self) -> bool {
-		self.deduped_live_neighboring_rulesets.len() > 0
+		self.deduped_live_neighboring_rulesets.len() > 1
 	}
 
 	fn next_live_state(&self) -> Option<Cell> {
