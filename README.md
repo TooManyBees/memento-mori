@@ -27,6 +27,10 @@ I have lately tended to describe life as "a pattern made out of chaos", where li
 
 Some time later, on that same social media feed, I stumbled upon [Don Hopkins's CAM6 Demo (YouTube)](https://www.youtube.com/watch?v=LyLMHxRNuck), a video in which Don Hopkins, with overflowing enthusiasm, demonstrates his web browser simulator for the [Cam-6](https://en.wikipedia.org/wiki/Cam-6). The Cam-6 is a computer expansion board from the 1980s, designed to run [cellular automata](https://en.wikipedia.org/wiki/Cellular_automata). Don's narration doesn't slow down for such trivialities as "what is a cellular automaton?", and his focus never stays in the same place long enough to explain much anyway, but one thing you need to know about me is that I love anyone eagerly talking shop about something they love.
 
-About 5 minutes in, when he says "[Rudy Rucker](https://www.rudyrucker.com) came up with a nifty idea of combining Brian's Brain together with Life and one called Anneal…" is when I began to draw some parallels.
+About 5 minutes in, when he says "[Rudy Rucker](https://www.rudyrucker.com) came up with a nifty idea of combining Brian's Brain together with Life and one called Anneal…" is when I saw the shape of an organism declaring a boundary between itself and its surroundings, and began to draw some parallels.
 
 I want to think a bit about systems that tend away from equilibrium, and the semi-arbitrary distinctions that most of us make between life and death, between "somethings" that are a part of a system and other "somethings" that aren't part of a system, and the moment when we change our determination about what is or isn't alive.
+
+## How to run this program
+
+You can't, because I haven't released `rust-nite2`. Sucks to be youuuu
