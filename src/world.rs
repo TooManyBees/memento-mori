@@ -206,22 +206,23 @@ impl World {
 
 				let idx = row * BOARD_WIDTH + col;
 
-				let next_cell = if let Some(ruleset) = temporary_rulesets[idx]{
-					ruleset.next_cell_state(scratch_board.as_slice(), row, col)
+				if let Some(ruleset) = temporary_rulesets[idx]{
+					let next_cell = ruleset.next_cell_state(scratch_board.as_slice(), row, col);
+					next_board[idx].state = next_cell.state;
 				} else if growth_enabled && growth.has_competing_rulesets() {
-					let next_state = growth
+					let next_cell = growth
 						.next_live_state()
 						.unwrap_or_else(|| board[idx].ruleset.next_cell_state(scratch_board.as_slice(), row, col));
 
-					if next_state.ruleset != board[idx].ruleset {
-						board[idx].ruleset = next_state.ruleset;
+					if next_cell.ruleset != board[idx].ruleset {
+						board[idx].ruleset = next_cell.ruleset;
 					}
 
-					next_state
+					next_board[idx] = next_cell;
 				} else {
-					board[idx].ruleset.next_cell_state(scratch_board.as_slice(), row, col)
-				};
-				next_board[idx] = next_cell;
+					let next_cell = board[idx].ruleset.next_cell_state(scratch_board.as_slice(), row, col);
+					next_board[idx].state = next_cell.state;
+				}
 				// debug_assert_eq!(next_board[idx].ruleset, board[idx].ruleset);
 			}
 		}
