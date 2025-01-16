@@ -112,7 +112,13 @@ fn event(app: &App, model: &mut Model, event: Event) {
 					}
 				}
 			}
-			WindowEvent::KeyPressed(Key::N) => model.record_frames = 150,
+			WindowEvent::KeyPressed(Key::N) => {
+				if model.record_frames > 0 {
+					model.record_frames = 0;
+				} else {
+					model.record_frames = 150
+				}
+			}
 			_ => {}
 		},
 		_ => {}
@@ -288,7 +294,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 		app.main_window().capture_frame(file_path);
 	}
 
-	if model.draw_brush {
+	if model.draw_brush && !model.capture_frame {
 		let draw = app.draw();
 		let brush_radius = (2usize.pow(model.brush.size as u32) * CELL_SIZE) as f32;
 		draw.ellipse()
