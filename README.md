@@ -31,6 +31,20 @@ About 5 minutes in, when he says "[Rudy Rucker](https://www.rudyrucker.com) came
 
 I want to think a bit about systems that tend away from equilibrium, and the semi-arbitrary distinctions that most of us make between life and death, between "somethings" that are a part of a system and other "somethings" that aren't part of a system, and the moment when we change our determination about what is or isn't alive.
 
+## Experiments in dissolving myself
+
+### Variations on a theme
+
+![My body as a drifting cloud of particles, slowly consumed by a creeping blue blob.](docs/2025-01-14_1.gif)
+![Variation on my body as a cloud of particles being consumed.](docs/2025-01-14_2.gif)
+![Variation on my body as a cloud of particles being consumed.](docs/2025-01-14_3.gif)
+
+![Two figures amid an expanding chaotic background, finally consumed by it.](docs/2025-01-15_1.gif)
+
+![My body as a chaotic green cloud that suddenly dies and smears across the image like ink wiped across acetate.](docs/2025-01-16_1.gif)
+![My body as a chaotic green cloud that is suddenly consumed by its environment.](docs/2025-01-16_2.gif)
+![My body as a chaotic green cloud that is suddenly consumed by its environment, then a green blob starts growing in its place.](docs/2025-01-16_3.gif)
+
 ## How to run this program
 
 You can't, because I haven't released `rust-nite2`. Sucks to be youuuu
