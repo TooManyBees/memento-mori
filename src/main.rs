@@ -110,7 +110,13 @@ fn event(app: &App, model: &mut Model, event: Event) {
 					}
 				}
 			}
-			WindowEvent::KeyPressed(Key::N) => model.record_frames = 150,
+			WindowEvent::KeyPressed(Key::N) => {
+				if model.record_frames > 0 {
+					model.record_frames = 0;
+				} else {
+					model.record_frames = 150
+				}
+			}
 			_ => {}
 		},
 		_ => {}
