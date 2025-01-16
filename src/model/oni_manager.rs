@@ -24,24 +24,20 @@ impl OniManager {
 		let user_frame = self.user_tracker.read_frame()?;
 		let user_map = user_frame.user_map();
 		if self.stream_width != user_map.width || self.stream_height != user_map.height {
-			println!(
-				"Wrong user map dimensions! Expected {}x{}, got {}x{}",
-				self.stream_width, self.stream_height, user_map.width, user_map.height
-			);
-			// FIXME obviously this is not "ok"
-			return Ok(());
+			return Err(OniError::UserMapSizeMismatch {
+				expected: (self.stream_width, self.stream_height),
+				actual: (user_map.width, user_map.height),
+			});
 		}
 		self.users_present = !user_frame.users().is_empty();
 		self.user_map.copy_from_slice(user_map.pixels);
 
 		let color_frame = self.color_stream.read_frame::<OniRGB888Pixel>()?;
 		if self.color_frame.len() != color_frame.pixels().len() {
-			println!(
-				"Wrong color frame length! Expected {}, got {}",
-				self.color_frame.len(),
-				color_frame.pixels().len()
-			);
-			return Ok(());
+			return Err(OniError::ColorFrameSizeMismatch {
+				expected: self.color_frame.len(),
+				actual: color_frame.pixels().len(),
+			});
 		}
 		for (i, pixel) in color_frame.pixels().iter().enumerate() {
 			let mut value = pixel.r as u16 + pixel.g as u16 + pixel.b as u16;
@@ -173,6 +169,14 @@ impl Drop for OniManager {
 pub enum OniError {
 	OpenNi(openni2::Status),
 	Nite(nite2::Status),
+	UserMapSizeMismatch {
+		expected: (usize, usize),
+		actual: (usize, usize),
+	},
+	ColorFrameSizeMismatch {
+		expected: usize,
+		actual: usize,
+	},
 }
 
 impl std::fmt::Debug for OniError {
@@ -185,6 +189,16 @@ impl std::fmt::Debug for OniError {
 				fmt.write_fmt(format_args!("OniError::OpenNi({:?})", status))
 			}
 			OniError::Nite(status) => fmt.write_fmt(format_args!("OniError::Nite({:?})", status)),
+			OniError::UserMapSizeMismatch { expected, actual } => fmt
+				.debug_struct("OniError::UserMapSizeMismatch")
+				.field("expected", &expected)
+				.field("actual", &actual)
+				.finish(),
+			OniError::ColorFrameSizeMismatch { expected, actual } => fmt
+				.debug_struct("OniError::ColorFrameSizeMismatch")
+				.field("expected", &expected)
+				.field("actual", &actual)
+				.finish(),
 		}
 	}
 }

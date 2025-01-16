@@ -283,7 +283,8 @@ fn view(app: &App, model: &Model, frame: Frame) {
 			.unwrap()
 			.join("capture")
 			.join(format!("{}_{:03}", app.exe_name().unwrap(), frame.nth()))
-			.with_extension("bmp");
+			.with_extension("gif");
+
 		app.main_window().capture_frame(file_path);
 	}
 
