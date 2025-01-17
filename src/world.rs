@@ -143,10 +143,30 @@ impl World {
 		}
 	}
 
-	fn boards_and_growth(&mut self) -> (&mut [Cell], &mut [Cell], &[Option<Ruleset>], &[Option<u8>], &mut Growth) {
+	fn boards_and_growth(
+		&mut self,
+	) -> (
+		&mut [Cell],
+		&mut [Cell],
+		&[Option<Ruleset>],
+		&[Option<u8>],
+		&mut Growth,
+	) {
 		match self.current_board {
-			CurrentBoard::A => (&mut self.state_a, &mut self.state_b, &self.temporary_rulesets, &self.temporary_states, &mut self.growth),
-			CurrentBoard::B => (&mut self.state_b, &mut self.state_a, &self.temporary_rulesets, &self.temporary_states, &mut self.growth),
+			CurrentBoard::A => (
+				&mut self.state_a,
+				&mut self.state_b,
+				&self.temporary_rulesets,
+				&self.temporary_states,
+				&mut self.growth,
+			),
+			CurrentBoard::B => (
+				&mut self.state_b,
+				&mut self.state_a,
+				&self.temporary_rulesets,
+				&self.temporary_states,
+				&mut self.growth,
+			),
 		}
 	}
 
@@ -173,7 +193,8 @@ impl World {
 	}
 
 	pub fn generate(&mut self, growth_enabled: bool) {
-		let (board, next_board, temporary_rulesets, temporary_states, growth) = self.boards_and_growth();
+		let (board, next_board, temporary_rulesets, temporary_states, growth) =
+			self.boards_and_growth();
 		// next_board
 		// 	.par_chunks_exact_mut(BOARD_WIDTH)
 		// 	.enumerate()
@@ -193,10 +214,7 @@ impl World {
 			.map(|((cell, maybe_state), maybe_ruleset)| {
 				let state = maybe_state.unwrap_or(cell.state);
 				let ruleset = maybe_ruleset.unwrap_or(cell.ruleset);
-				Cell {
-					ruleset,
-					state,
-				}
+				Cell { ruleset, state }
 			})
 			.collect::<Vec<Cell>>();
 
@@ -208,7 +226,7 @@ impl World {
 
 				let idx = row * BOARD_WIDTH + col;
 
-				if let Some(ruleset) = temporary_rulesets[idx]{
+				if let Some(ruleset) = temporary_rulesets[idx] {
 					// If operating on a temporary ruleset, bypass growth. The shape of a person
 					// shouldn't grow.
 					let next_cell = ruleset.next_cell_state(scratch_board.as_slice(), row, col);
@@ -216,9 +234,11 @@ impl World {
 				} else if growth_enabled && growth.has_competing_rulesets() {
 					// If growth is enabled and there's more than 1 live ruleset around a cell,
 					// compete for growth.
-					let next_cell = growth
-						.next_live_state()
-						.unwrap_or_else(|| board[idx].ruleset.next_cell_state(scratch_board.as_slice(), row, col));
+					let next_cell = growth.next_live_state().unwrap_or_else(|| {
+						board[idx]
+							.ruleset
+							.next_cell_state(scratch_board.as_slice(), row, col)
+					});
 
 					if next_cell.ruleset != board[idx].ruleset {
 						board[idx].ruleset = next_cell.ruleset;
@@ -228,7 +248,10 @@ impl World {
 				} else {
 					// Otherwise there's no need to check for growth. Either it's disabled, or
 					// the cell is surrounded by just 1 rule.
-					let next_cell = board[idx].ruleset.next_cell_state(scratch_board.as_slice(), row, col);
+					let next_cell =
+						board[idx]
+							.ruleset
+							.next_cell_state(scratch_board.as_slice(), row, col);
 					next_board[idx].state = next_cell.state;
 				}
 				// debug_assert_eq!(next_board[idx].ruleset, board[idx].ruleset);
