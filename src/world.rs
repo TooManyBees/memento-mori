@@ -184,12 +184,10 @@ impl World {
 
 	pub fn reset(&mut self) {
 		let blank_cell = Ruleset::default().off();
-		for cell in &mut self.state_a {
-			*cell = blank_cell;
-		}
-		for cell in &mut self.state_b {
-			*cell = blank_cell;
-		}
+		self.state_a.fill(blank_cell);
+		self.state_b.fill(blank_cell);
+		self.temporary_states.fill(None);
+		self.temporary_rulesets.fill(None);
 	}
 
 	pub fn generate(&mut self, growth_enabled: bool) {
