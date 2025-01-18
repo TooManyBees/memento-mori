@@ -86,6 +86,16 @@ impl std::ops::IndexMut<usize> for Board {
 	}
 }
 
+impl Board {
+	pub fn iter(&self) -> impl Iterator<Item=&Cell> {
+		self.cells.iter()
+	}
+
+	pub fn iter_mut(&mut self) -> impl Iterator<Item=&mut Cell> {
+		self.cells.iter_mut()
+	}
+}
+
 #[derive(Debug)]
 pub struct World {
 	state_a: Board,
@@ -220,7 +230,6 @@ impl World {
 		// 	});
 
 		let scratch_cells = board
-			.cells
 			.iter()
 			.zip(temporary_states)
 			.zip(temporary_rulesets)

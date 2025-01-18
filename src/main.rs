@@ -246,9 +246,8 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 				let (board, next_board, temporary_rulesets, temporary_states) =
 					model.world.this_board_and_next_and_temporary();
 				for (((cell, next_cell), maybe_ruleset), maybe_state) in board
-					.cells
 					.iter_mut()
-					.zip(next_board.cells.iter_mut())
+					.zip(next_board.iter_mut())
 					.zip(temporary_rulesets)
 					.zip(temporary_states)
 				{
