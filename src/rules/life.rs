@@ -1,5 +1,5 @@
 use crate::rules::Ruleset;
-use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Board, Cell};
 use nannou::color::LinSrgba;
 use nannou::rand;
 use std::fmt::Write;
@@ -37,7 +37,7 @@ impl Life {
 		}
 	}
 
-	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
+	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
 	}
 
@@ -53,8 +53,8 @@ enum State {
 	Alive = 1,
 }
 
-fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_center: bool) -> u8 {
-	let idx = row * BOARD_WIDTH + col;
+fn count_live_row_neighbors(board: &Board, row: usize, col: usize, exclude_center: bool) -> u8 {
+	let idx = row * board.width + col;
 
 	let mut live = if exclude_center {
 		0
@@ -67,7 +67,7 @@ fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_cent
 		live |= board[idx - 1].state & 0b01;
 	}
 
-	if (col + 1) < BOARD_WIDTH {
+	if (col + 1) < board.width {
 		live <<= 1;
 		live |= board[idx + 1].state & 0b01;
 	}
@@ -75,7 +75,7 @@ fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_cent
 	live
 }
 
-fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
+fn count_live_neighbors(board: &Board, row: usize, col: usize) -> u32 {
 	let mut live_neighbors = count_live_row_neighbors(board, row, col, true);
 
 	if row > 0 {
@@ -83,7 +83,7 @@ fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
 		live_neighbors |= count_live_row_neighbors(board, row - 1, col, false);
 	}
 
-	if row + 1 < BOARD_HEIGHT {
+	if row + 1 < board.height {
 		live_neighbors <<= 3;
 		live_neighbors |= count_live_row_neighbors(board, row + 1, col, false);
 	}
@@ -91,9 +91,9 @@ fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
 	live_neighbors.count_ones()
 }
 
-fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
+fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 	let live_neighbors = count_live_neighbors(board, row, col);
-	let idx = row * BOARD_WIDTH + col;
+	let idx = row * board.width + col;
 
 	let is_alive = board[idx].state & 0b01 > 0;
 	let state = if is_alive {

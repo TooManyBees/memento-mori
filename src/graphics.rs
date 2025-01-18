@@ -126,12 +126,15 @@ pub fn make_graphics(app: &App, width: usize, height: usize) -> Graphics {
 		color_buffer,
 		bind_group,
 		render_pipeline,
+		// texture,
+		// texture_capturer,
 	}
 }
 
 pub fn render_graphics(frame: &Frame, graphics: &Graphics, world: &World, blend_overlay: bool) {
 	let cell_colors: Vec<_> = world
 		.board()
+		.cells
 		.iter()
 		.zip(&world.temporary_rulesets)
 		.map(|(cell, maybe_ruleset)| {

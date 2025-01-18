@@ -1,5 +1,5 @@
 use crate::rules::Ruleset;
-use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Board, Cell};
 use nannou::color::LinSrgba;
 use nannou::rand;
 use std::fmt::Write;
@@ -42,8 +42,8 @@ impl Seeds {
 		}
 	}
 
-	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
-		let idx = row * BOARD_WIDTH + col;
+	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
+		let idx = row * board.width + col;
 		if board[idx].state == State::Alive as u8 {
 			Seeds::dead()
 		} else {
@@ -68,8 +68,8 @@ enum State {
 	Alive = 1,
 }
 
-fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_center: bool) -> u8 {
-	let idx = row * BOARD_WIDTH + col;
+fn count_live_row_neighbors(board: &Board, row: usize, col: usize, exclude_center: bool) -> u8 {
+	let idx = row * board.width + col;
 
 	let mut live = if exclude_center {
 		0
@@ -82,7 +82,7 @@ fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_cent
 		live |= board[idx - 1].state & 0b01;
 	}
 
-	if (col + 1) < BOARD_WIDTH {
+	if (col + 1) < board.width {
 		live <<= 1;
 		live |= board[idx + 1].state & 0b01;
 	}
@@ -90,7 +90,7 @@ fn count_live_row_neighbors(board: &[Cell], row: usize, col: usize, exclude_cent
 	live
 }
 
-fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
+fn count_live_neighbors(board: &Board, row: usize, col: usize) -> u32 {
 	let mut live_neighbors = count_live_row_neighbors(board, row, col, true);
 
 	if row > 0 {
@@ -98,7 +98,7 @@ fn count_live_neighbors(board: &[Cell], row: usize, col: usize) -> u32 {
 		live_neighbors |= count_live_row_neighbors(board, row - 1, col, false);
 	}
 
-	if row + 1 < BOARD_HEIGHT {
+	if row + 1 < board.height {
 		live_neighbors <<= 3;
 		live_neighbors |= count_live_row_neighbors(board, row + 1, col, false);
 	}

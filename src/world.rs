@@ -1,8 +1,5 @@
 use crate::rules::Ruleset;
 
-pub const BOARD_WIDTH: usize = 256;
-pub const BOARD_HEIGHT: usize = 256;
-
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Cell {
 	pub ruleset: Ruleset,
@@ -29,15 +26,8 @@ impl Default for Growth {
 }
 
 impl Growth {
-	fn find_neighboring_rulesets(&mut self, board: &[Cell], row: usize, col: usize) {
-		adjacent_live_rulesets(
-			&mut self.all_live_neighboring_rulests,
-			board,
-			row,
-			col,
-			BOARD_WIDTH,
-			BOARD_HEIGHT,
-		);
+	fn find_neighboring_rulesets(&mut self, board: &Board, row: usize, col: usize) {
+		adjacent_live_rulesets(&mut self.all_live_neighboring_rulests, board, row, col);
 		self.deduped_live_neighboring_rulesets.clear();
 		self.deduped_live_neighboring_rulesets
 			.extend_from_slice(&self.all_live_neighboring_rulests);
@@ -76,10 +66,30 @@ impl Growth {
 	}
 }
 
+#[derive(Debug, Clone)]
+pub struct Board {
+	pub cells: Vec<Cell>,
+	pub width: usize,
+	pub height: usize,
+}
+
+impl std::ops::Index<usize> for Board {
+	type Output = Cell;
+	fn index(&self, idx: usize) -> &Cell {
+		&self.cells[idx]
+	}
+}
+
+impl std::ops::IndexMut<usize> for Board {
+	fn index_mut(&mut self, idx: usize) -> &mut Cell {
+		&mut self.cells[idx]
+	}
+}
+
 #[derive(Debug)]
 pub struct World {
-	state_a: Vec<Cell>,
-	state_b: Vec<Cell>,
+	state_a: Board,
+	state_b: Board,
 	growth: Growth,
 	current_board: CurrentBoard,
 	pub temporary_rulesets: Vec<Option<Ruleset>>,
@@ -87,11 +97,15 @@ pub struct World {
 }
 
 impl World {
-	pub fn new() -> Self {
-		let state_a = vec![Cell::default(); BOARD_WIDTH * BOARD_HEIGHT];
+	pub fn new(width: usize, height: usize) -> Self {
+		let state_a = Board {
+			cells: vec![Cell::default(); width * height],
+			width,
+			height,
+		};
 		let state_b = state_a.clone();
-		let temporary_rulesets = vec![None; BOARD_WIDTH * BOARD_HEIGHT];
-		let temporary_states = vec![None; BOARD_WIDTH * BOARD_HEIGHT];
+		let temporary_rulesets = vec![None; width * height];
+		let temporary_states = vec![None; width * height];
 
 		World {
 			state_a,
@@ -103,14 +117,14 @@ impl World {
 		}
 	}
 
-	pub fn board(&self) -> &[Cell] {
+	pub fn board(&self) -> &Board {
 		match self.current_board {
 			CurrentBoard::A => &self.state_a,
 			CurrentBoard::B => &self.state_b,
 		}
 	}
 
-	pub fn board_mut(&mut self) -> &mut [Cell] {
+	pub fn board_mut(&mut self) -> &mut Board {
 		match self.current_board {
 			CurrentBoard::A => &mut self.state_a,
 			CurrentBoard::B => &mut self.state_b,
@@ -119,7 +133,7 @@ impl World {
 
 	pub fn this_board_and_next_and_temporary(
 		&mut self,
-	) -> (&mut [Cell], &mut [Cell], &[Option<Ruleset>], &[Option<u8>]) {
+	) -> (&mut Board, &mut Board, &[Option<Ruleset>], &[Option<u8>]) {
 		match self.current_board {
 			CurrentBoard::A => (
 				&mut self.state_a,
@@ -136,7 +150,7 @@ impl World {
 		}
 	}
 
-	pub fn this_board_and_next(&mut self) -> (&mut [Cell], &mut [Cell]) {
+	pub fn this_board_and_next(&mut self) -> (&mut Board, &mut Board) {
 		match self.current_board {
 			CurrentBoard::A => (&mut self.state_a, &mut self.state_b),
 			CurrentBoard::B => (&mut self.state_b, &mut self.state_a),
@@ -146,8 +160,8 @@ impl World {
 	fn boards_and_growth(
 		&mut self,
 	) -> (
-		&mut [Cell],
-		&mut [Cell],
+		&mut Board,
+		&mut Board,
 		&[Option<Ruleset>],
 		&[Option<u8>],
 		&mut Growth,
@@ -171,21 +185,21 @@ impl World {
 	}
 
 	pub fn randomize(&mut self) {
-		for cell in self.board_mut() {
+		for cell in &mut self.board_mut().cells {
 			*cell = cell.ruleset.random();
 		}
 	}
 
 	pub fn clear(&mut self) {
-		for cell in self.board_mut() {
+		for cell in &mut self.board_mut().cells {
 			*cell = cell.ruleset.off();
 		}
 	}
 
 	pub fn reset(&mut self) {
 		let blank_cell = Ruleset::default().off();
-		self.state_a.fill(blank_cell);
-		self.state_b.fill(blank_cell);
+		self.state_a.cells.fill(blank_cell);
+		self.state_b.cells.fill(blank_cell);
 		self.temporary_states.fill(None);
 		self.temporary_rulesets.fill(None);
 	}
@@ -205,7 +219,8 @@ impl World {
 		// 		}
 		// 	});
 
-		let scratch_board = board
+		let scratch_cells = board
+			.cells
 			.iter()
 			.zip(temporary_states)
 			.zip(temporary_rulesets)
@@ -216,26 +231,30 @@ impl World {
 			})
 			.collect::<Vec<Cell>>();
 
-		for row in 0..BOARD_HEIGHT {
-			for col in 0..BOARD_WIDTH {
+		let scratch_board = Board {
+			cells: scratch_cells,
+			width: board.width,
+			height: board.height,
+		};
+
+		for row in 0..board.height {
+			for col in 0..board.width {
 				if growth_enabled {
-					growth.find_neighboring_rulesets(scratch_board.as_slice(), row, col);
+					growth.find_neighboring_rulesets(&scratch_board, row, col);
 				}
 
-				let idx = row * BOARD_WIDTH + col;
+				let idx = row * board.width + col;
 
 				if let Some(ruleset) = temporary_rulesets[idx] {
 					// If operating on a temporary ruleset, bypass growth. The shape of a person
 					// shouldn't grow.
-					let next_cell = ruleset.next_cell_state(scratch_board.as_slice(), row, col);
+					let next_cell = ruleset.next_cell_state(&scratch_board, row, col);
 					next_board[idx].state = next_cell.state;
 				} else if growth_enabled && growth.has_competing_rulesets() {
 					// If growth is enabled and there's more than 1 live ruleset around a cell,
 					// compete for growth.
 					let next_cell = growth.next_live_state().unwrap_or_else(|| {
-						board[idx]
-							.ruleset
-							.next_cell_state(scratch_board.as_slice(), row, col)
+						board[idx].ruleset.next_cell_state(&scratch_board, row, col)
 					});
 
 					if next_cell.ruleset != board[idx].ruleset {
@@ -246,10 +265,7 @@ impl World {
 				} else {
 					// Otherwise there's no need to check for growth. Either it's disabled, or
 					// the cell is surrounded by just 1 rule.
-					let next_cell =
-						board[idx]
-							.ruleset
-							.next_cell_state(scratch_board.as_slice(), row, col);
+					let next_cell = board[idx].ruleset.next_cell_state(&scratch_board, row, col);
 					next_board[idx].state = next_cell.state;
 				}
 				// debug_assert_eq!(next_board[idx].ruleset, board[idx].ruleset);
@@ -271,31 +287,24 @@ enum CurrentBoard {
 	B,
 }
 
-fn adjacent_live_rulesets(
-	output: &mut Vec<Ruleset>,
-	board: &[Cell],
-	row: usize,
-	col: usize,
-	width: usize,
-	height: usize,
-) {
+fn adjacent_live_rulesets(output: &mut Vec<Ruleset>, board: &Board, row: usize, col: usize) {
 	output.clear();
 
 	if row > 0 {
-		adjacent_live_rulesets_row(output, board, row - 1, col, width);
+		adjacent_live_rulesets_row(output, board, row - 1, col);
 	}
 
-	adjacent_live_rulesets_row(output, board, row, col, width);
+	adjacent_live_rulesets_row(output, board, row, col);
 
-	if row < height - 1 {
-		adjacent_live_rulesets_row(output, board, row + 1, col, width);
+	if row < board.height - 1 {
+		adjacent_live_rulesets_row(output, board, row + 1, col);
 	}
 
 	output.sort_unstable();
 }
 
 #[inline]
-fn push_ruleset_if_live(output: &mut Vec<Ruleset>, board: &[Cell], idx: usize) {
+fn push_ruleset_if_live(output: &mut Vec<Ruleset>, board: &Board, idx: usize) {
 	// Consider pushing ruleset if cell's state is nonzero, not only if cell's
 	// smallest bit is on. This will make the growth algorithm consider the
 	// rulesets of cells which aren't alive but have history in its upper bits,
@@ -305,14 +314,8 @@ fn push_ruleset_if_live(output: &mut Vec<Ruleset>, board: &[Cell], idx: usize) {
 	}
 }
 
-fn adjacent_live_rulesets_row(
-	output: &mut Vec<Ruleset>,
-	board: &[Cell],
-	row: usize,
-	col: usize,
-	width: usize,
-) {
-	let idx = row * width + col;
+fn adjacent_live_rulesets_row(output: &mut Vec<Ruleset>, board: &Board, row: usize, col: usize) {
+	let idx = row * board.width + col;
 
 	if col > 0 {
 		push_ruleset_if_live(output, board, idx - 1);
@@ -320,7 +323,7 @@ fn adjacent_live_rulesets_row(
 
 	push_ruleset_if_live(output, board, idx);
 
-	if col < width - 1 {
+	if col < board.width - 1 {
 		push_ruleset_if_live(output, board, idx + 1);
 	}
 }
@@ -339,11 +342,11 @@ fn sort_rulesets_by_population(result: &mut Vec<(Ruleset, u8)>, rulesets: &[Rule
 
 #[cfg(test)]
 mod test {
-	use super::{adjacent_live_rulesets, sort_rulesets_by_population, Cell, Ruleset};
+	use super::{adjacent_live_rulesets, sort_rulesets_by_population, Board, Cell, Ruleset};
 
 	#[test]
 	fn adjacent_live_rulesets_clusters_rulesets() {
-		let board = [
+		let cells = [
 			Ruleset::Life,
 			Ruleset::Life,
 			Ruleset::LatticeGas,
@@ -360,6 +363,11 @@ mod test {
 			state: 0b01,
 		})
 		.collect::<Vec<_>>();
+		let board = Board {
+			cells,
+			width: 3,
+			height: 3,
+		};
 
 		let expected = vec![
 			Ruleset::Life,
@@ -374,13 +382,13 @@ mod test {
 		];
 
 		let mut result = Vec::with_capacity(9);
-		adjacent_live_rulesets(&mut result, &board, 1, 1, 3, 3);
+		adjacent_live_rulesets(&mut result, &board, 1, 1);
 		assert_eq!(result, expected);
 	}
 
 	#[test]
 	fn adjacent_live_rulesets_ignores_dead_cells() {
-		let board = [
+		let cells = [
 			(Ruleset::Life, 0b01),
 			(Ruleset::Life, 0b00),
 			(Ruleset::LatticeGas, 0b01),
@@ -395,6 +403,12 @@ mod test {
 		.map(|(ruleset, state)| Cell { ruleset, state })
 		.collect::<Vec<_>>();
 
+		let board = Board {
+			cells,
+			width: 3,
+			height: 3,
+		};
+
 		let expected = vec![
 			Ruleset::Life,
 			Ruleset::BriansBrain,
@@ -404,7 +418,7 @@ mod test {
 		];
 
 		let mut result = Vec::with_capacity(9);
-		adjacent_live_rulesets(&mut result, &board, 1, 1, 3, 3);
+		adjacent_live_rulesets(&mut result, &board, 1, 1);
 		assert_eq!(result, expected);
 	}
 

@@ -5,7 +5,7 @@ mod lattice_gas;
 mod life;
 mod seeds;
 
-use crate::world::Cell;
+use crate::world::{Board, Cell};
 pub use anti_life::AntiLife;
 pub use brians_brain::BriansBrain;
 pub use diamoeba::Diamoeba;
@@ -97,7 +97,7 @@ impl Ruleset {
 		}
 	}
 
-	pub fn next_cell_state(&self, board: &[Cell], row: usize, col: usize) -> Cell {
+	pub fn next_cell_state(&self, board: &Board, row: usize, col: usize) -> Cell {
 		match self {
 			Ruleset::Life => Life::next_cell_state(board, row, col),
 			Ruleset::AntiLife => AntiLife::next_cell_state(board, row, col),

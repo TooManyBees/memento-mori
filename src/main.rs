@@ -8,10 +8,12 @@ use crate::graphics::{make_graphics, render_graphics};
 use crate::model::OniManager;
 use crate::model::{AnimationState, Brush, ColRow, DrawUserState, Model};
 use crate::rules::Ruleset;
-use crate::world::{World, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::World;
 use nannou::prelude::*;
 use std::time::{Duration, Instant};
 
+const BOARD_WIDTH: usize = 256;
+const BOARD_HEIGHT: usize = 256;
 const CELL_SIZE: usize = 4;
 const GENERATION_RATE: Duration = Duration::from_millis(1000 / 15);
 
@@ -48,7 +50,7 @@ fn model(app: &App) -> Model {
 	};
 
 	Model {
-		world: World::new(),
+		world: World::new(BOARD_WIDTH, BOARD_HEIGHT),
 		brush: Brush {
 			size: 3,
 			ruleset: Ruleset::default().next(),
@@ -244,8 +246,9 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 				let (board, next_board, temporary_rulesets, temporary_states) =
 					model.world.this_board_and_next_and_temporary();
 				for (((cell, next_cell), maybe_ruleset), maybe_state) in board
+					.cells
 					.iter_mut()
-					.zip(next_board.iter_mut())
+					.zip(next_board.cells.iter_mut())
 					.zip(temporary_rulesets)
 					.zip(temporary_states)
 				{

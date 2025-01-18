@@ -1,5 +1,5 @@
 use crate::rules::Ruleset;
-use crate::world::{Cell, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::world::{Board, Cell};
 use nannou::color::LinSrgba;
 use nannou::rand;
 use std::fmt::Write;
@@ -37,7 +37,7 @@ impl LatticeGas {
 		1u8 << rand::random_range::<u8>(1, 5)
 	}
 
-	pub fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
+	pub fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 		next_cell_state(board, row, col)
 	}
 
@@ -76,19 +76,19 @@ const GOING_LEFT: u8 = 0b00100;
 const GOING_RIGHT: u8 = 0b00010;
 const POPULATED: u8 = 0b00001;
 
-fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
+fn next_cell_state(board: &Board, row: usize, col: usize) -> Cell {
 	let mut combined_states = 0;
 	if row > 0 {
-		combined_states |= LatticeGas::going_down(board[(row - 1) * BOARD_WIDTH + col]);
+		combined_states |= LatticeGas::going_down(board[(row - 1) * board.width + col]);
 	}
-	if row < BOARD_HEIGHT - 1 {
-		combined_states |= LatticeGas::going_up(board[(row + 1) * BOARD_WIDTH + col]);
+	if row < board.height - 1 {
+		combined_states |= LatticeGas::going_up(board[(row + 1) * board.width + col]);
 	}
 	if col > 0 {
-		combined_states |= LatticeGas::going_right(board[row * BOARD_WIDTH + col - 1]);
+		combined_states |= LatticeGas::going_right(board[row * board.width + col - 1]);
 	}
-	if col < BOARD_WIDTH - 1 {
-		combined_states |= LatticeGas::going_left(board[row * BOARD_WIDTH + col + 1]);
+	if col < board.width - 1 {
+		combined_states |= LatticeGas::going_left(board[row * board.width + col + 1]);
 	}
 
 	if combined_states == 0 {
@@ -106,12 +106,12 @@ fn next_cell_state(board: &[Cell], row: usize, col: usize) -> Cell {
 
 	if col == 0 && combined_states & GOING_LEFT > 0 {
 		combined_states = combined_states & (!GOING_LEFT) | GOING_RIGHT;
-	} else if col == BOARD_WIDTH - 1 && combined_states & GOING_RIGHT > 0 {
+	} else if col == board.width - 1 && combined_states & GOING_RIGHT > 0 {
 		combined_states = combined_states & (!GOING_RIGHT) | GOING_LEFT;
 	}
 	if row == 0 && combined_states & GOING_UP > 0 {
 		combined_states = combined_states & (!GOING_UP) | GOING_DOWN;
-	} else if row == BOARD_HEIGHT - 1 && combined_states & GOING_DOWN > 0 {
+	} else if row == board.height - 1 && combined_states & GOING_DOWN > 0 {
 		combined_states = combined_states & (!GOING_DOWN) | GOING_UP;
 	}
 
